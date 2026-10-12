@@ -128,3 +128,14 @@ npm install @prisma/client@7 @prisma/adapter-pg pg dotenv
 
 Baca lebih lanjut pada link: 
 [https://www.prisma.io/docs/v7/prisma-orm/quickstart/prisma-postgres?utm_source=docs](https://www.prisma.io/docs/v7/prisma-orm/quickstart/prisma-postgres?utm_source=docs)
+
+
+# Ringkasan Urutan Alur Kerja:
+1. ```schema.prisma``` (Buat tabel database)
+2. ```validation``` (Buat aturan validasi input)
+3. ```service``` (Buat fungsi logika bisnis & query database)
+4. ```controller``` (Buat pengatur request & response)
+5. ```route``` (Buka endpoint URL untuk diakses)
+
+**Catatan:** 
+> Folder ```error``` dan ```middleware``` biasanya dibuat atau diatur di awal proyek sebagai utilitas global, sehingga Anda tinggal memakainya saat membuat file di ```route``` atau ```controller```.

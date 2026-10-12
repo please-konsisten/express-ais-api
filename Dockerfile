@@ -1,0 +1,13 @@
+# Use node version 24 as base
+FROM node:24-alpine as base
+
+WORKDIR /app
+COPY package*.json .
+RUN npm install --legacy-peer-deps
+
+# Development target
+FROM base as development
+
+COPY . .
+EXPOSE 5000
+CMD [ "npm", "run", "dev" ]

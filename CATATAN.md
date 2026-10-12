@@ -105,7 +105,7 @@ npm install bcrypt express ioredis joi uuid winston
 ```
 Untuk dev depedensi, masukan command:
 ```
-npm install --save-dev @types/supertest @types/uuid supertest
+npm install --save-dev @types/express @types/supertest @types/uuid supertest
 ```
 ### 6. Setup Jest menggunakan Babel
 Installasi jest dengan npm:

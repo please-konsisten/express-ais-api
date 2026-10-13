@@ -30,17 +30,21 @@ const login = async (
   }
 }
 
-// const get = async (req, res, next) => {
-//     try {
-//         const username = req.user.username;
-//         const result = await userService.get(username);
-//         res.status(200).json({
-//             data: result
-//         });
-//     } catch (e) {
-//         next(e);
-//     }
-// }
+const get = async (
+  req: any,
+  res: any,
+  next: any
+) => {
+  try {
+    const username = req.user.username;
+    const result = await userService.get(username);
+    res.status(200).json({
+      data: result
+    });
+  } catch (e) {
+    next(e);
+  }
+}
 
 // const update = async (req, res, next) => {
 //     try {
@@ -71,7 +75,7 @@ const login = async (
 export default {
   register,
   login,
-  //     get,
+  get,
   //     update,
   //     logout
 }

@@ -1,14 +1,16 @@
-// import express from "express";
-// import userController from "../controller/user-controller.js";
-// import contactController from "../controller/contact-controller.js";
-// import addressController from "../controller/address-controller.js";
-// import {authMiddleware} from "../middleware/auth-middleware.js";
+import express from "express";
+// --- Controller ---
+import userController from "@src/controller/user-controller.js";
+import contactController from "@src/controller/contact-controller.js";
+import addressController from "@src/controller/address-controller.js";
+// --- Middleware ---
+import { authMiddleware } from "@src/middleware/auth-middleware.js";
 
-// const userRouter = new express.Router();
-// userRouter.use(authMiddleware);
+const userRouter = express.Router();
+userRouter.use(authMiddleware);
 
-// // User API
-// userRouter.get('/api/users/current', userController.get);
+// User API
+userRouter.get('/api/users/current', userController.get);
 // userRouter.patch('/api/users/current', userController.update);
 // userRouter.delete('/api/users/logout', userController.logout);
 

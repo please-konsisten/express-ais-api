@@ -6,12 +6,13 @@ import {
   getUserValidation,
   loginUserValidation,
   registerUserValidation,
-  updateUserValidation
-} from "@src/validation/user-validation.ts";
+  updateUserValidation } from "@src/validation/user-validation.ts";
 import { prismaClient } from "@src/application/database.ts";
 import { ResponseError } from "@src/error/response-error.js";
 
-import type { RegisterUserRequest } from "@src/type/user-type.ts";
+import type { 
+  LoginUserRequest, 
+  RegisterUserRequest } from "@src/type/user-type.ts";
 
 const register = async (request: RegisterUserRequest) => {
   const user = validate(registerUserValidation, request);
@@ -37,41 +38,41 @@ const register = async (request: RegisterUserRequest) => {
   });
 }
 
-// const login = async (request: any) => {
-//   const loginRequest = validate(loginUserValidation, request);
+const login = async (request: LoginUserRequest) => {
+  const loginRequest = validate(loginUserValidation, request);
 
-//   const user = await prismaClient.user.findUnique({
-//     where: {
-//       username: loginRequest.username
-//     },
-//     select: {
-//       username: true,
-//       password: true
-//     }
-//   });
+  const user = await prismaClient.user.findUnique({
+    where: {
+      username: loginRequest.username
+    },
+    select: {
+      username: true,
+      password: true
+    }
+  });
 
-//   if (!user) {
-//     throw new ResponseError(401, "Username or password wrong");
-//   }
+  if (!user) {
+    throw new ResponseError(401, "Username or password wrong");
+  }
 
-//   const isPasswordValid = await bcrypt.compare(loginRequest.password, user.password);
-//   if (!isPasswordValid) {
-//     throw new ResponseError(401, "Username or password wrong");
-//   }
+  const isPasswordValid = await bcrypt.compare(loginRequest.password, user.password);
+  if (!isPasswordValid) {
+    throw new ResponseError(401, "Username or password wrong");
+  }
 
-//   const token = uuid().toString()
-//   return prismaClient.user.update({
-//     data: {
-//       token: token
-//     },
-//     where: {
-//       username: user.username
-//     },
-//     select: {
-//       token: true
-//     }
-//   });
-// }
+  const token = uuid().toString()
+  return prismaClient.user.update({
+    data: {
+      token: token
+    },
+    where: {
+      username: user.username
+    },
+    select: {
+      token: true
+    }
+  });
+}
 
 // const get = async (username: any) => {
 //   username = validate(getUserValidation, username);
@@ -154,7 +155,7 @@ const register = async (request: RegisterUserRequest) => {
 
 export default {
   register,
-  // login,
+  login,
   // get,
   // update,
   // logout

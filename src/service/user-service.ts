@@ -12,7 +12,8 @@ import { ResponseError } from "@src/error/response-error.js";
 
 import type { 
   LoginUserRequest, 
-  RegisterUserRequest } from "@src/type/user-type.ts";
+  RegisterUserRequest, 
+  UpdateUserRequest} from "@src/type/user-type.ts";
 
 const register = async (request: RegisterUserRequest) => {
   const user = validate(registerUserValidation, request);
@@ -94,38 +95,39 @@ const get = async (username: string) => {
   return user;
 }
 
-// const update = async (request: any) => {
-//   const user = validate(updateUserValidation, request);
+const update = async (request: UpdateUserRequest) => {
+  const user:UpdateUserRequest = validate(updateUserValidation, request);
 
-//   const totalUserInDatabase = await prismaClient.user.count({
-//     where: {
-//       username: user.username
-//     }
-//   });
+  const totalUserInDatabase = await prismaClient.user.count({
+    where: {
+      username: user.username
+    }
+  });
 
-//   if (totalUserInDatabase !== 1) {
-//     throw new ResponseError(404, "user is not found");
-//   }
+  if (totalUserInDatabase !== 1) {
+    throw new ResponseError(404, "user is not found");
+  }
 
-//   const data = {};
-//   if (user.name) {
-//     data.name = user.name;
-//   }
-//   if (user.password) {
-//     data.password = await bcrypt.hash(user.password, 10);
-//   }
+  const data:UpdateUserRequest = { "username":user.username };
 
-//   return prismaClient.user.update({
-//     where: {
-//       username: user.username
-//     },
-//     data: data,
-//     select: {
-//       username: true,
-//       name: true
-//     }
-//   })
-// }
+  if (user.name) {
+    data.name = user.name;
+  }
+  if (user.password) {
+    data.password = await bcrypt.hash(user.password, 10);
+  }
+
+  return prismaClient.user.update({
+    where: {
+      username: user.username
+    },
+    data: data,
+    select: {
+      username: true,
+      name: true
+    }
+  })
+}
 
 // const logout = async (username: any) => {
 //   username = validate(getUserValidation, username);
@@ -157,6 +159,6 @@ export default {
   register,
   login,
   get,
-  // update,
+  update,
   // logout
 }

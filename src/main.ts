@@ -1,6 +1,10 @@
-import {web} from "./application/web.js";
-import {logger} from "./application/logging.js";
+import { web } from './application/web.js';
+import { logger } from './application/logging.js';
 
-web.listen(5000, () => {
-    logger.info("App start");
+web.get('/', (req, res) => {
+  res.send('Test Hello');
+});
+
+web.listen(3000, () => {
+  logger.info('App start');
 });

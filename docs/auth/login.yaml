@@ -1,0 +1,36 @@
+post:
+  summary: Login Pengguna
+  description: Endpoint untuk masuk ke dalam aplikasi menggunakan username dan password untuk mendapatkan JWT.
+  tags:
+    - Authentication
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          type: object
+          required:
+            - username
+            - password
+          properties:
+            username:
+              type: string
+              example: user_contoh
+            password:
+              type: string
+              format: password
+              example: rahasia123
+  responses:
+    '200':
+      description: Login sukses, mengembalikan token akses.
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              token_type:
+                type: string
+                example: Bearer
+              access_token:
+                type: string
+

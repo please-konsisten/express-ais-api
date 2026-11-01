@@ -3,16 +3,19 @@ import { logger } from './application/logging.js';
 
 const PORT = process.env.PORT || 3000;
 
-function startServer() {
+const startServer = async () => {
   try {
-    web.listen(PORT, () => {
-      console.log(`🚀 Aplikasi berhasil berjalan di http://localhost:${PORT}`);
-      console.log(`📝 Dokumentasi Swagger UI: http://localhost:${PORT}/api-docs`);
+    const app = await web();
+
+    app.listen(PORT, () => {
+      console.log(`🚀 Server running dynamically on http://localhost:${PORT}`);
+      console.log(`📖 View Swagger Docs at http://localhost:${PORT}/docs`);
     });
   } catch (error) {
-    console.error("Gagal menjalankan aplikasi:", error);
+    console.error('❌ Server failed to start:', error);
     process.exit(1);
   }
-}
+};
+
 
 startServer();

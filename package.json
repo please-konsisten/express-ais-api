@@ -19,6 +19,7 @@
   "type": "module",
   "devDependencies": {
     "@types/bcrypt": "^6.0.0",
+    "@types/express": "^5.0.6",
     "@types/jest": "^30.0.0",
     "@types/node": "^26.6.6",
     "@types/pg": "^8.23.1",
@@ -26,6 +27,7 @@
     "@types/swagger-jsdoc": "^6.0.4",
     "@types/swagger-ui-express": "^4.1.8",
     "@types/uuid": "^10.0.0",
+    "@types/yaml": "^1.9.6",
     "babel-jest": "^30.5.2",
     "jest": "^30.5.2",
     "prisma": "^7.10.0",
@@ -34,6 +36,7 @@
     "typescript": "^7.0.2"
   },
   "dependencies": {
+    "@apidevtools/swagger-parser": "^13.1.0",
     "@prisma/adapter-pg": "^7.10.0",
     "@prisma/client": "^7.10.0",
     "bcrypt": "^6.0.0",
@@ -45,6 +48,7 @@
     "swagger-jsdoc": "^6.3.0",
     "swagger-ui-express": "^5.0.1",
     "uuid": "^14.0.3",
-    "winston": "^3.19.0"
+    "winston": "^3.19.0",
+    "yaml": "^2.9.1"
   }
 }

@@ -1,0 +1,13 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Express AIS API",
+    "version": "1.0.0",
+    "description": "Dokumentasi API untuk Academic Information System (AIS)"
+  },
+  "paths": {
+    "/login": {
+        "$ref": "auth/login.yaml"
+    }
+  }
+}

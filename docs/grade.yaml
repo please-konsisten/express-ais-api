@@ -1,0 +1,71 @@
+paths:
+  /grades:
+    post:
+      summary: Memberikan atau memperbarui nilai siswa (Akses Teacher & Admin)
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - student_id
+                - class_id
+                - subject_name
+                - score
+                - semester
+              properties:
+                student_id:
+                  type: string
+                  example: STD-10025
+                class_id:
+                  type: string
+                  example: CLS-10A
+                subject_name:
+                  type: string
+                  example: Matematika
+                score:
+                  type: number
+                  format: float
+                  example: 88.5
+                semester:
+                  type: integer
+                  example: 1
+      responses:
+        '201':
+          description: Nilai berhasil disimpan
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Grade'
+        '403':
+          description: Hanya Teacher atau Admin yang dapat memberi nilai
+
+    get:
+      summary: Melihat nilai siswa (Akses Student melihat milik sendiri, Teacher/Admin melihat semua)
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: student_id
+          in: query
+          required: false
+          schema:
+            type: string
+          example: STD-10025
+        - name: class_id
+          in: query
+          required: false
+          schema:
+            type: string
+          example: CLS-10A
+      responses:
+        '200':
+          description: Data nilai berhasil diambil
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Grade'

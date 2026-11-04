@@ -4,6 +4,7 @@ import { prisma } from '@src/lib/prisma-client';
 import { generateAccessToken, generateRefreshToken } from '../utils/jwt';
 import jwt from 'jsonwebtoken';
 import type { RegisterAccountRequest } from '@src/types/auth-type';
+import authService from '@src/services/auth-service';
 
 const JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET || 'refresh_secret';
 
@@ -40,12 +41,15 @@ const register = async (
 {
   try {
     const { username, email, password } = req.body;
-
-    const result = await 
+    const result = await authService.register({ username, email, password });
+    res.status(201).json({
+      data: result
+    });
   } catch (e) {
     next(e)
   }
 }
+
 const refresh_token = async (req: Request, res: Response) => {
   const { refreshToken } = req.body;
 

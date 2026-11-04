@@ -13,7 +13,7 @@ const login = () => {
 
 }
 
-const register = async (req: Request<unknown, unknown, RegisterAccountRequest>) => {
+const register = async (req: RegisterAccountRequest) => {
   const account = validate(registerAccountValidation, req)
   const { email, username, password } = account
 
@@ -26,7 +26,6 @@ const register = async (req: Request<unknown, unknown, RegisterAccountRequest>) 
   if (existingUser === 1) {
     throw new ResponseError(400, "Username already exists");
   }
-
 
   const saltRounds = 10;
   const hashedPassword = await bcrypt.hash(password, saltRounds);
@@ -46,6 +45,6 @@ const refresh_token = () => {
 
 }
 
-export {
+export default {
   register
 }

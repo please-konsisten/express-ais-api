@@ -1,4 +1,5 @@
-FROM node:24-alpine as base
+ARG NODE_VERSION=26
+FROM node:${NODE_VERSION}-alpine as base
 
 RUN apk add --no-cache openssl
 

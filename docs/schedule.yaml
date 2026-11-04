@@ -1,0 +1,67 @@
+paths:
+  /schedules:
+    get:
+      summary: Mendapatkan daftar jadwal kelas
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: class_id
+          in: query
+          required: false
+          schema:
+            type: string
+          example: CLS-10A
+      responses:
+        '200':
+          description: Daftar jadwal berhasil diambil
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Schedule'
+    post:
+      summary: Membuat jadwal baru (Akses Admin / Super Admin & Teacher)
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - class_id
+                - subject_name
+                - teacher_id
+                - day
+                - start_time
+                - end_time
+              properties:
+                class_id:
+                  type: string
+                  example: CLS-10A
+                subject_name:
+                  type: string
+                  example: Matematika
+                teacher_id:
+                  type: string
+                  example: TCH-001
+                day:
+                  type: string
+                  example: Senin
+                start_time:
+                  type: string
+                  example: "08:00"
+                end_time:
+                  type: string
+                  example: "09:30"
+      responses:
+        '201':
+          description: Jadwal berhasil dibuat
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Schedule'
+        '403':
+          description: Tidak memiliki hak akses (Forbidden)

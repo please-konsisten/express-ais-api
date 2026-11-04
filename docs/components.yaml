@@ -1,0 +1,57 @@
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    Schedule:
+      type: object
+      properties:
+        id:
+          type: string
+          example: SCH-9981
+        class_id:
+          type: string
+          example: CLS-10A
+        subject_name:
+          type: string
+          example: Matematika
+        teacher_id:
+          type: string
+          example: TCH-001
+        day:
+          type: string
+          example: Senin
+        start_time:
+          type: string
+          example: "08:00"
+        end_time:
+          type: string
+          example: "09:30"
+
+    Grade:
+      type: object
+      properties:
+        id:
+          type: string
+          example: GRD-5501
+        student_id:
+          type: string
+          example: STD-10025
+        class_id:
+          type: string
+          example: CLS-10A
+        subject_name:
+          type: string
+          example: Matematika
+        score:
+          type: number
+          example: 88.5
+        semester:
+          type: integer
+          example: 1
+        updated_at:
+          type: string
+          format: date-time

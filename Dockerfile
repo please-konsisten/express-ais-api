@@ -1,16 +1,22 @@
-# Use node version 24 as base
 FROM node:24-alpine as base
+
+RUN apk add --no-cache openssl
 
 WORKDIR /app
 COPY package*.json .
+
 RUN npm install --legacy-peer-deps
-RUN chown -R node:node .
 
-USER node
 
-# Development target
 FROM base as development
 
-COPY . .
+COPY prisma ./prisma/
+RUN chown -R node:node /app
+USER node
+
+RUN npx prisma generate
+
+COPY --chown=node:node . .
+
 EXPOSE 3000
 CMD [ "npm", "run", "dev" ]

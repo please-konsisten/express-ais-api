@@ -20,7 +20,7 @@ enum Role {
 
 
 model Account {
-  id            String         @id @db.VarChar(100)
+  id            String         @id @default(uuid()) @db.VarChar(100)
   username      String         @unique @db.VarChar(50)
   email         String         @unique @db.VarChar(150)
   password      String         @db.VarChar(255) 
@@ -35,7 +35,7 @@ model Account {
 }
 
 model RefreshToken {
-  id           String   @id @db.VarChar(100)
+  id           String   @id @default(uuid()) @db.VarChar(100)
   token        String   @unique @db.VarChar(500)
   expiredAt    DateTime
   createdAt    DateTime @default(now())
@@ -48,7 +48,7 @@ model RefreshToken {
 }
 
 model User {
-  id          String   @id @db.VarChar(100)
+  id          String   @id @default(uuid()) @db.VarChar(100)
   fullName    String   @db.VarChar(150)
   phoneNumber String?  @db.VarChar(20)
   gender      String?  @db.VarChar(10) 
@@ -65,7 +65,7 @@ model User {
 }
 
 model StudentProfile {
-  id            String   @id @db.VarChar(100)
+  id            String   @id @default(uuid()) @db.VarChar(100)
   nim           String   @unique @db.VarChar(20)
   major         String   @db.VarChar(100) 
   faculty       String   @db.VarChar(100)
@@ -80,7 +80,7 @@ model StudentProfile {
 }
 
 model StaffProfile {
-  id            String   @id @db.VarChar(100)
+  id            String   @id @default(uuid()) @db.VarChar(100)
   nidn          String?  @unique @db.VarChar(20)
   nip           String   @unique @db.VarChar(20)
   department    String   @db.VarChar(100)
@@ -94,7 +94,7 @@ model StaffProfile {
 }
 
 model AdminProfile {
-  id            String   @id @db.VarChar(100)
+  id            String   @id @default(uuid()) @db.VarChar(100)
   accessLevel   String   @default("SUPERADMIN")  
   managedScope  String?  @db.VarChar(100)
 

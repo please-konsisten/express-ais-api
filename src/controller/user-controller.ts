@@ -1,4 +1,4 @@
-import userService from "@src/service/user-service.js";
+import userService from "@src/services/user-service.js";
 
 const register = async (
   req: any,

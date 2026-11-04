@@ -13,7 +13,7 @@ import { ResponseError } from "@src/error/response-error.js";
 import type { 
   LoginUserRequest, 
   RegisterUserRequest, 
-  UpdateUserRequest} from "@src/type/user-type.ts";
+  UpdateUserRequest} from "@src/types/user-type";
 
 const register = async (request: RegisterUserRequest) => {
   const user = validate(registerUserValidation, request);

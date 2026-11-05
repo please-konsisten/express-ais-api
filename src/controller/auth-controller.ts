@@ -1,35 +1,32 @@
-import { type Request, type Response, type NextFunction } from 'express';
 import bcrypt from 'bcrypt';
+import jwt from 'jsonwebtoken';
+
+import authService from '@src/services/auth-service';
 import { prisma } from '@src/lib/prisma-client';
 import { generateAccessToken, generateRefreshToken } from '../utils/jwt';
-import jwt from 'jsonwebtoken';
-import type { RegisterAccountRequest } from '@src/types/auth-type';
-import authService from '@src/services/auth-service';
+
+import type { Request, Response, NextFunction } from 'express';
+import type { LoginAccountRequest, RegisterAccountRequest } from '@src/types/auth-type';
 
 const JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET || 'refresh_secret';
 
-const login = async (req: Request, res: Response, next: NextFunction) => {
-  const { email, password } = req.body;
-
+const login = async (
+  req: Request <unknown, unknown, LoginAccountRequest>, 
+  res: Response, next: NextFunction
+) => {
   try {
-    const account = await prisma.account.findUnique({ where: { email } });
-    if (!account) {
-      return res.status(401).json({ message: 'Email atau password salah' });
-    }
-
-    const isPasswordValid = await bcrypt.compare(password, account.password);
-    if (!isPasswordValid) {
-      return res.status(401).json({ message: 'Email atau password salah' });
-    }
-
-    const accessToken = generateAccessToken(account);
-    const refreshToken = await generateRefreshToken(account.id);
-
-    res.json({
-      message: 'Login berhasil',
-      accessToken,
-      refreshToken
+    const { identifier, password } = req.body;
+    const { accessToken, refreshToken } = await authService.login({ identifier, password })
+    res.cookie('refreshToken', refreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      maxAge: 7 * 24 * 60 * 60 * 1000
     });
+
+    res.status(200).json({ 
+      data: { accessToken } 
+    }); 
   } catch (e) {
     next(e)
   }
@@ -37,8 +34,8 @@ const login = async (req: Request, res: Response, next: NextFunction) => {
 
 const register = async (
   req: Request <unknown, unknown, RegisterAccountRequest>, 
-  res: Response, next: NextFunction) => 
-{
+  res: Response, next: NextFunction
+) => {
   try {
     const { username, email, password } = req.body;
     const result = await authService.register({ username, email, password });

@@ -1,29 +1,56 @@
 import bcrypt from "bcrypt";
 
 import { prisma } from "@src/lib/prisma-client"
-import { registerAccountValidation } from "@src/validation/auth-validation"
+import { loginAccountValidation, registerAccountValidation } from "@src/validation/auth-validation"
 import { validate } from "@src/validation/validation"
-
-import type { Request } from "express"
-import type { RegisterAccountRequest } from "@src/types/auth-type"
 import { ResponseError } from "@src/error/response-error";
+import { generateAccessToken, generateRefreshToken } from '../utils/jwt';
+
+import type { LoginAccountRequest, LoginAccountResponse, RegisterAccountRequest } from "@src/types/auth-type"
 
 
-const login = () => {
+const login = async (dataRequest: LoginAccountRequest) : Promise<LoginAccountResponse> => {
+  const accountValidation = validate(loginAccountValidation, dataRequest)
+  const { identifier, password } = accountValidation
 
+  const account = await prisma.account.findFirst({
+    where: {
+      OR: [
+        { email: identifier },
+        { username: identifier }
+      ]
+    }
+  });
+
+  if (!account) {
+    throw new ResponseError(401,'Email atau password salah');
+  }
+
+  const isPasswordValid = await bcrypt.compare(password, account.password);
+  if (!isPasswordValid) {
+    throw new ResponseError(401,'Email atau password salah');
+  }
+
+  const accessToken = generateAccessToken(account);
+  const refreshToken = await generateRefreshToken(account.id);
+
+  return{
+    accessToken,
+    refreshToken
+  }
 }
 
-const register = async (req: RegisterAccountRequest) => {
-  const account = validate(registerAccountValidation, req)
-  const { email, username, password } = account
+const register = async (dataRequest: RegisterAccountRequest) => {
+  const accountValidation = validate(registerAccountValidation, dataRequest)
+  const { email, username, password } = accountValidation
 
-  const existingUser = await prisma.account.count({
+  const existingAccount = await prisma.account.count({
     where: {
       OR: [{ email }, { username }]
     }
   });
 
-  if (existingUser === 1) {
+  if (existingAccount === 1) {
     throw new ResponseError(400, "Username already exists");
   }
 
@@ -46,5 +73,6 @@ const refresh_token = () => {
 }
 
 export default {
-  register
+  register,
+  login
 }

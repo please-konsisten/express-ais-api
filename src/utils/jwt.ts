@@ -20,7 +20,6 @@ export const generateRefreshToken = async (accountId: string) => {
 
   await prisma.refreshToken.create({
     data: {
-      id: `rt_${Date.now()}`,
       token: token,
       expiredAt: expiredAt,
       accountId: accountId

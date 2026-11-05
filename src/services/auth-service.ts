@@ -68,11 +68,14 @@ const register = async (dataRequest: RegisterAccountRequest) => {
   return newAccount
 }
 
-const refresh_token = () => {
-
+const refresh_token = (cookieToken: string) => {
+  if (!cookieToken) {
+    throw new ResponseError(401, "Refresh token tidak ditemukan");
+  }
 }
 
 export default {
   register,
-  login
+  login,
+  refresh_token
 }

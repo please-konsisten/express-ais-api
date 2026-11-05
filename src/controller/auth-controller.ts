@@ -47,48 +47,18 @@ const register = async (
   }
 }
 
-const refresh_token = async (req: Request, res: Response) => {
-  const { refreshToken } = req.body;
-
-  if (!refreshToken) {
-    return res.status(401).json({ message: 'Refresh token tidak ditemukan' });
-  }
-
+const refresh_token = async (
+  req: Request<unknown, unknown, LoginAccountRequest>,
+  res: Response, 
+  next: NextFunction
+) => {
   try {
-    const savedToken = await prisma.refreshToken.findUnique({
-      where: { token: refreshToken },
-      include: { account: true } 
-    });
-
-    if (!savedToken) {
-      return res.status(403).json({ message: 'Refresh token tidak valid' });
-    }
-
-    if (new Date() > savedToken.expiredAt) {
-      await prisma.refreshToken.delete({ where: { token: refreshToken } });
-      return res.status(403).json({ message: 'Refresh token telah kedaluwarsa, silakan login ulang' });
-    }
-
-    jwt.verify(refreshToken, JWT_REFRESH_SECRET, (err: any) => {
-      if (err) {
-        return res.status(403).json({ message: 'Verifikasi Refresh Token gagal' });
-      }
-
-      const newAccessToken = generateAccessToken({
-        id: savedToken.account.id,
-        email: savedToken.account.email,
-        username: savedToken.account.username
-      });
-
-      res.json({
-        accessToken: newAccessToken
-      });
-    });
-
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: 'Terjadi kesalahan pada server saat me-refresh token' });
+    const cookieToken = req.cookies.refreshToken
+    const result = await authService.refresh_token(cookieToken)
+  } catch (e) {
+    next(e)
   }
+
 }
 
 export default {

@@ -1,34 +1,32 @@
-// import express from "express";
-
-// export const web = express()
-// web.use(express.json());
-
-import express from 'express';
+import express, { type Response } from 'express';
+import cookieParser from "cookie-parser";
 import swaggerUi from 'swagger-ui-express';
 import SwaggerParser from "@apidevtools/swagger-parser";
 import path from 'path';
+import { publicRouter } from '@src/route/public-api';
 
 export const web = async () => {
   const app = express();
-  const parser = new SwaggerParser();
 
   app.use(express.json());
+  app.use(cookieParser())
 
-  const mainSwaggerPath = path.join(process.cwd(), './docs/swagger.json'); 
-
-  try {
-    const bundledSwagger = await parser.validate(mainSwaggerPath);
-    
-    app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(bundledSwagger));
-    console.log('📝 Swagger UI documentation successfully loaded at /docs');
-  } catch (error) {
-    console.error('❌ Gagal memuat dokumentasi Swagger:', error);
-  }
-
-  // Definisikan route aplikasi Anda di bawah ini
-  app.get('/', (req, res) => {
+  app.get('/', (_, res: Response) => {
     res.json({ message: "Welcome to Express AIS API" });
   });
 
-  return app;
+  app.use('/api', [publicRouter])
+
+  try {
+    const parser = new SwaggerParser();
+    const mainSwaggerPath = path.join(process.cwd(), './docs/swagger.json');
+    const bundledSwagger = await parser.validate(mainSwaggerPath);
+
+    app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(bundledSwagger));
+    console.log('Swagger UI documentation successfully loaded at /docs');
+
+    return app;
+  } catch (error) {
+    console.error('Gagal memuat dokumentasi Swagger:', error);
+  }
 };

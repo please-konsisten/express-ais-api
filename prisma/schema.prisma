@@ -12,6 +12,99 @@ datasource db {
   provider = "postgresql"
 }
 
+// enum Role {
+//   STUDENT
+//   STAFF
+//   ADMIN
+// }
+
+
+// model Account {
+//   id            String         @id @default(uuid()) @db.VarChar(100)
+//   username      String         @unique @db.VarChar(50)
+//   email         String         @unique @db.VarChar(150)
+//   password      String         @db.VarChar(255) 
+//   role          Role           @default(STUDENT) 
+//   createdAt     DateTime       @default(now())
+//   updatedAt     DateTime       @updatedAt
+
+//   refreshTokens RefreshToken[] 
+//   user          User?
+
+//   @@map("accounts")
+// }
+
+// model RefreshToken {
+//   id           String   @id @default(uuid()) @db.VarChar(100)
+//   token        String   @unique @db.VarChar(500)
+//   expiredAt    DateTime
+//   createdAt    DateTime @default(now())
+//   updatedAt    DateTime @updatedAt
+
+//   accountId    String   @db.VarChar(100)
+//   account      Account  @relation(fields: [accountId], references: [id], onDelete: Cascade)
+
+//   @@map("refresh_tokens")
+// }
+
+// model User {
+//   id          String   @id @default(uuid()) @db.VarChar(100)
+//   fullName    String   @db.VarChar(150)
+//   phoneNumber String?  @db.VarChar(20)
+//   gender      String?  @db.VarChar(10) 
+//   avatarUrl   String?  @db.VarChar(255)
+
+//   accountId   String   @unique @db.VarChar(100)
+//   account     Account  @relation(fields: [accountId], references: [id], onDelete: Cascade)
+
+//   studentProfile StudentProfile?
+//   staffProfile   StaffProfile?
+//   adminProfile   AdminProfile?
+
+//   @@map("users")
+// }
+
+// model StudentProfile {
+//   id            String   @id @default(uuid()) @db.VarChar(100)
+//   nim           String   @unique @db.VarChar(20)
+//   major         String   @db.VarChar(100) 
+//   faculty       String   @db.VarChar(100)
+//   currentPeriod Int      @default(1)
+//   admissionYear Int
+//   status        String   @default("ACTIVE")
+
+//   userId        String   @unique @db.VarChar(100)
+//   user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+//   @@map("student_profiles")
+// }
+
+// model StaffProfile {
+//   id            String   @id @default(uuid()) @db.VarChar(100)
+//   nidn          String?  @unique @db.VarChar(20)
+//   nip           String   @unique @db.VarChar(20)
+//   department    String   @db.VarChar(100)
+//   position      String   @db.VarChar(50)
+//   status        String   @default("ACTIVE")
+
+//   userId        String   @unique @db.VarChar(100)
+//   user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+//   @@map("staff_profiles")
+// }
+
+// model AdminProfile {
+//   id            String   @id @default(uuid()) @db.VarChar(100)
+//   accessLevel   String   @default("SUPERADMIN")  
+//   managedScope  String?  @db.VarChar(100)
+
+//   userId        String   @unique @db.VarChar(100)
+//   user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+//   @@map("admin_profiles")
+// }
+
+
 enum Role {
   STUDENT
   STAFF
@@ -35,15 +128,18 @@ model Account {
 }
 
 model RefreshToken {
-  id           String   @id @default(uuid()) @db.VarChar(100)
-  token        String   @unique @db.VarChar(500)
+  id           String    @id @default(uuid()) @db.VarChar(100)
+  tokenHash    String    @unique @db.VarChar(64) 
   expiredAt    DateTime
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  revokedAt    DateTime? 
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
 
-  accountId    String   @db.VarChar(100)
-  account      Account  @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  accountId    String    @db.VarChar(100)
+  account      Account   @relation(fields: [accountId], references: [id], onDelete: Cascade)
 
+  @@index([accountId])
+  @@index([expiredAt])
   @@map("refresh_tokens")
 }
 
@@ -103,4 +199,3 @@ model AdminProfile {
 
   @@map("admin_profiles")
 }
-

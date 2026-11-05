@@ -17,8 +17,9 @@ CREATE TABLE "accounts" (
 -- CreateTable
 CREATE TABLE "refresh_tokens" (
     "id" VARCHAR(100) NOT NULL,
-    "token" VARCHAR(500) NOT NULL,
+    "tokenHash" VARCHAR(64) NOT NULL,
     "expiredAt" TIMESTAMP(3) NOT NULL,
+    "revokedAt" TIMESTAMP(3),
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
     "accountId" VARCHAR(100) NOT NULL,
@@ -82,7 +83,13 @@ CREATE UNIQUE INDEX "accounts_username_key" ON "accounts"("username");
 CREATE UNIQUE INDEX "accounts_email_key" ON "accounts"("email");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "refresh_tokens_token_key" ON "refresh_tokens"("token");
+CREATE UNIQUE INDEX "refresh_tokens_tokenHash_key" ON "refresh_tokens"("tokenHash");
+
+-- CreateIndex
+CREATE INDEX "refresh_tokens_accountId_idx" ON "refresh_tokens"("accountId");
+
+-- CreateIndex
+CREATE INDEX "refresh_tokens_expiredAt_idx" ON "refresh_tokens"("expiredAt");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "users_accountId_key" ON "users"("accountId");

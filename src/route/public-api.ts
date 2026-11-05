@@ -3,9 +3,9 @@ import authController from '@src/controller/auth-controller';
 
 const publicRouter = express.Router();
 
-publicRouter.post('/login', authController.login);
-publicRouter.post('/register', authController.register);
-publicRouter.post('/refresh-token', authController.refresh_token);
+publicRouter.post('/auth/login', authController.login);
+publicRouter.post('/auth/register', authController.register);
+publicRouter.post('/auth/refresh-token', authController.refresh_token);
 
 export {
   publicRouter

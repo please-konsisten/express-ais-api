@@ -5,6 +5,7 @@ import SwaggerParser from "@apidevtools/swagger-parser";
 import path from 'path';
 import { publicRouter } from '@src/route/public-api';
 import cors from "cors"
+import { task } from "@src/crons/token-delete";
 
 export const web = async () => {
   const app = express();
@@ -12,6 +13,7 @@ export const web = async () => {
   app.use(express.json());
   app.use(cookieParser())
   app.use(cors({ origin: 'http://localhost:5173', credentials: true }))
+  task.start()
 
   app.get('/', (_, res: Response) => {
     res.json({ message: "Welcome to Express AIS API" });

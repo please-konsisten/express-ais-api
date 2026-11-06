@@ -181,6 +181,31 @@ const issueRefreshToken = async (account: AccountIdentity) => {
   return token;
 };
 
+const testRefreshToken = async (account: AccountIdentity, hashCookie) => {
+  const token = jwt.sign(
+    { id: account.id, type: 'refresh' },
+    REFRESH_TOKEN_SECRET,
+    {
+      expiresIn: REFRESH_TOKEN_TTL_SECONDS,
+      algorithm: 'HS256',
+      jwtid: randomUUID(),
+    }
+  );
+
+  await prisma.refreshToken.update({
+    where: {
+      id:hashCookie
+    },
+    data: {
+      tokenHash: sha256(token),
+      accountId: account.id,
+      expiredAt: new Date(Date.now() + REFRESH_TOKEN_TTL_SECONDS * 1000),
+    },
+  });
+
+  return token;
+};
+
 const verifyRefreshJwt = (token: string): { id: string } => {
   try {
     const decoded = jwt.verify(token, REFRESH_TOKEN_SECRET, { algorithms: ['HS256'] });

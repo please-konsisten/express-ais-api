@@ -139,3 +139,6 @@ Baca lebih lanjut pada link:
 
 **Catatan:** 
 > Folder ```error``` dan ```middleware``` biasanya dibuat atau diatur di awal proyek sebagai utilitas global, sehingga Anda tinggal memakainya saat membuat file di ```route``` atau ```controller```.
+
+
+ip route show | awk '/default/ {print $3}'

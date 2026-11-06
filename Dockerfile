@@ -1,4 +1,5 @@
-FROM node:24-alpine as base
+ARG NODE_VERSION=26
+FROM node:${NODE_VERSION}-alpine as base
 
 RUN apk add --no-cache openssl
 
@@ -18,5 +19,5 @@ RUN npx prisma generate
 
 COPY --chown=node:node . .
 
-EXPOSE 3000
+EXPOSE 3001
 CMD [ "npm", "run", "dev" ]

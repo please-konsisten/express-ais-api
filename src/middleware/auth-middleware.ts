@@ -1,29 +1,25 @@
-import { prismaClient } from "@src/application/database.ts";
+import { type Request, type Response, type NextFunction } from 'express';
+import jwt from 'jsonwebtoken';
 
-export const authMiddleware = async (
-  req: any,
-  res: any,
-  next: any
-) => {
-  const token = req.get('Authorization');
+const JWT_SECRET = process.env.JWT_SECRET || 'secret';
+
+export interface AuthRequest extends Request {
+  user?: any;
+}
+
+export const authenticateToken = (req: AuthRequest, res: Response, next: NextFunction) => {
+  const authHeader = req.headers['authorization'];
+  const token = authHeader && authHeader.split(' ')[1];
 
   if (!token) {
-    res.status(401).json({
-      errors: "Unauthorized"
-    }).end();
-  } else {
-    const user = await prismaClient.user.findFirst({
-      where: {
-        token: token
-      }
-    });
-    if (!user) {
-      res.status(401).json({
-        errors: "Unauthorized"
-      }).end();
-    } else {
-      req.user = user;
-      next();
-    }
+    return res.status(401).json({ message: 'Akses ditolak, token tidak ditemukan' });
   }
-}
+
+  jwt.verify(token, JWT_SECRET, (err, user) => {
+    if (err) {
+      return res.status(403).json({ message: 'Token tidak valid atau kedaluwarsa' });
+    }
+    req.user = user;
+    next();
+  });
+};

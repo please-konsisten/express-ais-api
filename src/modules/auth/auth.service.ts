@@ -24,9 +24,9 @@ const issueTokens = async (user: TokenOwner, db: Prisma.TransactionClient | type
 
   await db.refreshToken.create({
     data: {
-      userId: user.id,
+      accountId: user.id,
       tokenHash: sha256(refreshToken),
-      expiresAt: new Date(Date.now() + REFRESH_TOKEN_TTL_MS),
+      expiredAt: new Date(Date.now() + REFRESH_TOKEN_TTL_MS),
     },
   });
 
@@ -49,7 +49,7 @@ export const login = async (input: LoginInput) => {
   // email dan username disimpan lowercase saat register
   const identifier = input.identifier.toLowerCase();
 
-  const user = await prismaClient.user.findFirst({
+  const user = await prismaClient.account.findFirst({
     where: { OR: [{ email: identifier }, { username: identifier }] },
     select: { ...userSelect, passwordHash: true },
   });
@@ -80,13 +80,13 @@ export const login = async (input: LoginInput) => {
 export const refresh = async (input: RefreshTokenInput) => {
   const stored = await prismaClient.refreshToken.findUnique({
     where: { tokenHash: sha256(input.refreshToken) },
-    include: { user: { select: userSelect } },
+    include: { account: { select: userSelect } },
   });
 
-  if (!stored || stored.expiresAt <= new Date()) {
+  if (!stored || stored.expiredAt <= new Date()) {
     throw new ResponseError(401, "Refresh token tidak valid atau sudah kedaluwarsa");
   }
-  if (!stored.user.isActive) {
+  if (!stored.account.isActive) {
     throw new ResponseError(403, "Akun tidak aktif");
   }
 
@@ -97,7 +97,7 @@ export const refresh = async (input: RefreshTokenInput) => {
     if (count !== 1) {
       throw new ResponseError(401, "Refresh token tidak valid atau sudah kedaluwarsa");
     }
-    return issueTokens(stored.user, tx);
+    return issueTokens(stored.account, tx);
   });
 };
 
@@ -110,15 +110,15 @@ export const logout = async (input: LogoutInput) => {
 
 // Setelah password berubah, semua sesi (refresh token) user dicabut, termasuk di perangkat lain.
 export const changePassword = async (userId: string, input: ChangePasswordInput) => {
-  const user = await prismaClient.user.findUnique({
+  const user = await prismaClient.account.findUnique({
     where: { id: userId },
-    select: { passwordHash: true },
+    select: { hashPassword: true },
   });
   if (!user) {
     throw new ResponseError(404, "User tidak ditemukan");
   }
 
-  const oldPasswordMatches = await bcrypt.compare(input.oldPassword, user.passwordHash);
+  const oldPasswordMatches = await bcrypt.compare(input.oldPassword, user.hashPassword);
   if (!oldPasswordMatches) {
     // 400, bukan 401, supaya klien tidak mengira sesinya habis lalu logout otomatis
     throw new ResponseError(400, "Password lama salah");
@@ -127,7 +127,7 @@ export const changePassword = async (userId: string, input: ChangePasswordInput)
   const passwordHash = await bcrypt.hash(input.newPassword, BCRYPT_ROUNDS);
 
   await prismaClient.$transaction([
-    prismaClient.user.update({ where: { id: userId }, data: { passwordHash } }),
-    prismaClient.refreshToken.deleteMany({ where: { userId } }),
+    prismaClient.account.update({ where: { id: userId }, data: { passwordHash } }),
+    prismaClient.refreshToken.deleteMany({ where: { id: userId } }),
   ]);
 };

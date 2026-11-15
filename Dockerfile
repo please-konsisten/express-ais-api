@@ -1,23 +1,26 @@
 ARG NODE_VERSION=26
-FROM node:${NODE_VERSION}-alpine as base
+FROM node:${NODE_VERSION}-slim AS base
 
-RUN apk add --no-cache openssl
+# slim berbasis Debian: openssl dipasang lewat apt (dibutuhkan Prisma)
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends openssl \
+    && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
-COPY package*.json .
-
-RUN npm install --legacy-peer-deps
-
-
-FROM base as development
-
-COPY prisma ./prisma/
-RUN chown -R node:node /app
+RUN chown node:node /app
 USER node
 
-RUN npx prisma generate
+# .npmrc ikut disalin supaya opsi seperti legacy-peer-deps=true terbaca saat npm ci
+COPY --chown=node:node package*.json .npmrc* ./
+RUN npm ci --legacy-peer-deps 
+
+
+FROM base AS development
+
+# COPY --chown=node:node prisma ./prisma/
+# RUN npx prisma generate
 
 COPY --chown=node:node . .
 
-EXPOSE 3001
-CMD [ "npm", "run", "dev" ]
+EXPOSE 3000
+CMD ["npm", "run", "dev"]

@@ -4,17 +4,14 @@
     // File Layout
     // "rootDir": "./src",
     // "outDir": "./dist",
-    "baseUrl": ".",
-    "paths": {
-      "@src/*": ["src/*"]
-    },
+    "paths": { "@src/*": ["./src/*"] },
 
     // Environment Settings
     // See also https://aka.ms/tsconfig/module
     "module": "preserve",
     "moduleResolution": "bundler",
     "target": "esnext",
-    "types": ["node"],
+    "types": ["node", "jest"],
     // For nodejs:
     // "lib": ["esnext"],
     // "types": ["node"],
@@ -47,6 +44,5 @@
     "skipLibCheck": true,
     "allowImportingTsExtensions": true,
     "noEmit": true,
-    "ignoreDeprecations": "6.0",
   }
 }

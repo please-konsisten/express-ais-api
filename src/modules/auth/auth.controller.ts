@@ -77,7 +77,7 @@
 //   refresh_token
 // }
 
-import authService from '@src/services/auth-service';
+import authService from '@src/modules/auth/auth.service';
 
 import type { Request, Response, NextFunction } from 'express';
 import type { LoginAccountRequest, RegisterAccountRequest } from '@src/types/auth-type';

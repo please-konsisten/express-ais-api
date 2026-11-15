@@ -105,10 +105,10 @@ import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import { createHash, randomUUID } from 'node:crypto';
 
-import { prisma } from '@src/lib/prisma-client';
-import { loginAccountValidation, registerAccountValidation } from '@src/validation/auth-validation';
-import { validate } from '@src/validation/validation';
-import { ResponseError } from '@src/error/response-error';
+import { prisma } from '@src/shared/lib/prisma-client';
+import { loginAccountValidation, registerAccountValidation } from '@src/modules/auth/auth.validation';
+import { validate } from '@src/shared/validation/validation';
+import { ResponseError } from '@src/shared/error/response-error';
 
 import type { LoginAccountRequest, LoginAccountResponse, RegisterAccountRequest } from '@src/types/auth-type';
 
@@ -181,7 +181,7 @@ const issueRefreshToken = async (account: AccountIdentity) => {
   return token;
 };
 
-const testRefreshToken = async (account: AccountIdentity, hashCookie) => {
+const testRefreshToken = async (account: AccountIdentity, hashCookie:any) => {
   const token = jwt.sign(
     { id: account.id, type: 'refresh' },
     REFRESH_TOKEN_SECRET,

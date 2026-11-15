@@ -1,5 +1,5 @@
-import { web } from './application/web.js';
-import { logger } from './application/logging.js';
+import { web } from './shared/lib/web.js';
+import { logger } from './shared/lib/logging.js';
 
 const PORT = process.env.PORT || 3000;
 
@@ -7,7 +7,7 @@ const startServer = async () => {
   try {
     const app = await web();
 
-    app.listen(PORT, () => {
+    app?.listen(PORT, () => {
       console.log(`🚀 Server running dynamically on http://localhost:${PORT}`);
       console.log(`📖 View Swagger Docs at http://localhost:${PORT}/docs`);
     });

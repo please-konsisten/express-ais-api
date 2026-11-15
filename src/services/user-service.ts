@@ -1,14 +1,14 @@
 import bcrypt from "bcrypt";
 import { v4 as uuid } from "uuid";
 
-import { validate } from "@src/validation/validation.ts";
+import { validate } from "@src/shared/validation/validation";
 import {
   getUserValidation,
   loginUserValidation,
   registerUserValidation,
-  updateUserValidation } from "@src/validation/user-validation.ts";
-import { prismaClient } from "@src/application/database.ts";
-import { ResponseError } from "@src/error/response-error.js";
+  updateUserValidation } from "@src/shared/validation/user-validation";
+import { prismaClient } from "@src/lib/database";
+import { ResponseError } from "@src/shared/error/response-error.js";
 
 import type { 
   LoginUserRequest, 

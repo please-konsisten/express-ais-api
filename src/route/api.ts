@@ -4,7 +4,7 @@ import userController from "@src/controller/user-controller.js";
 import contactController from "@src/controller/contact-controller.js";
 import addressController from "@src/controller/address-controller.js";
 // --- Middleware ---
-import { authMiddleware } from "@src/middleware/auth-middleware.js";
+import { authMiddleware } from "@src/shared/middleware/auth-middleware.js";
 
 const userRouter = express.Router();
 userRouter.use(authMiddleware);

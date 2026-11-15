@@ -1,7 +1,7 @@
 
 import cron from "node-cron"
 
-import {prisma} from "@src/lib/prisma-client"
+import {prisma} from "@src/shared/lib/prisma-client"
 
 // Jalankan SETIAP 1 MENIT (* * * * *)
 export const task = cron.schedule('* * * * *', async () => {

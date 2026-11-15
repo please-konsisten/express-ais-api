@@ -1,369 +1,133 @@
-// import bcrypt from "bcrypt";
+import bcrypt from "bcrypt";
+import { createHash, randomBytes } from "node:crypto";
+import type { Prisma } from "@src/generated/prisma/client";
+import { prismaClient } from "@src/shared/lib/database";
+import { signAccessToken } from "@src/shared/lib/jwt";
+import { ResponseError } from "@src/shared/errors/response-error";
+import type { ChangePasswordInput, LoginInput, LogoutInput, RefreshTokenInput } from "./auth.schema";
 
-// import { prisma } from "@src/lib/prisma-client"
-// import { loginAccountValidation, registerAccountValidation } from "@src/validation/auth-validation"
-// import { validate } from "@src/validation/validation"
-// import { ResponseError } from "@src/error/response-error";
-// import { generateAccessToken, generateRefreshToken } from '../utils/jwt';
+const BCRYPT_ROUNDS = 10;
+const REFRESH_TOKEN_TTL_MS = 7 * 24 * 60 * 60 * 1000; // 7 hari
 
-// import jwt from "jsonwebtoken";
+// Dipakai agar waktu respons login tetap mirip walau user tidak ditemukan
+// (mencegah orang menebak identifier mana yang terdaftar lewat selisih waktu).
+const DUMMY_HASH = bcrypt.hashSync("dummy-password", BCRYPT_ROUNDS);
 
-// import type { LoginAccountRequest, LoginAccountResponse, RegisterAccountRequest } from "@src/types/auth-type"
+const sha256 = (value: string) => createHash("sha256").update(value).digest("hex");
 
+type TokenOwner = { id: string; roleId: string };
 
-// const login = async (dataRequest: LoginAccountRequest): Promise<LoginAccountResponse> => {
-//   const accountValidation = validate(loginAccountValidation, dataRequest)
-//   const { identifier, password } = accountValidation
+// Refresh token acak disimpan dalam bentuk hash, jadi kebocoran database
+// tidak langsung memberi token yang bisa dipakai.
+const issueTokens = async (user: TokenOwner, db: Prisma.TransactionClient | typeof prismaClient = prismaClient) => {
+  const refreshToken = randomBytes(48).toString("base64url");
 
-//   const account = await prisma.account.findFirst({
-//     where: {
-//       OR: [
-//         { email: identifier },
-//         { username: identifier }
-//       ]
-//     }
-//   });
-
-//   if (!account) {
-//     throw new ResponseError(401, 'Email atau password salah');
-//   }
-
-//   const isPasswordValid = await bcrypt.compare(password, account.password);
-//   if (!isPasswordValid) {
-//     throw new ResponseError(401, 'Email atau password salah');
-//   }
-
-//   const accessToken = generateAccessToken(account);
-//   const refreshToken = await generateRefreshToken(account.id);
-
-//   return {
-//     accessToken,
-//     refreshToken
-//   }
-// }
-
-// const register = async (dataRequest: RegisterAccountRequest) => {
-//   const accountValidation = validate(registerAccountValidation, dataRequest)
-//   const { email, username, password } = accountValidation
-
-//   const existingAccount = await prisma.account.count({
-//     where: {
-//       OR: [{ email }, { username }]
-//     }
-//   });
-
-//   if (existingAccount === 1) {
-//     throw new ResponseError(400, "Username already exists");
-//   }
-
-//   const saltRounds = 10;
-//   const hashedPassword = await bcrypt.hash(password, saltRounds);
-
-//   const newAccount = await prisma.account.create({
-//     data: {
-//       username,
-//       email,
-//       password: hashedPassword
-//     }
-//   });
-
-//   return newAccount
-// }
-
-// const refresh_token = async (cookieToken: string) => {
-//   if (!cookieToken) {
-//     throw new ResponseError(401, "Refresh token tidak ditemukan");
-//   }
-
-//   const decoded = jwt.verify(cookieToken, process.env.REFRESH_TOKEN_SECRET as string) as any;
-
-//   const newAccessToken = jwt.sign(
-//     { id: decoded.id, email: decoded.email },
-//     process.env.ACCESS_TOKEN_SECRET as string,
-//     { expiresIn: '15m' }
-//   );
-
-//   const newRefreshToken = jwt.sign(
-//     { id: decoded.id, email: decoded.email },
-//     process.env.REFRESH_TOKEN_SECRET as string,
-//     { expiresIn: '7d' }
-//   );
-
-//   return {
-//     newAccessToken,
-//     newRefreshToken
-//   };
-// }
-
-// export default {
-//   register,
-//   login,
-//   refresh_token
-// }
-
-import bcrypt from 'bcrypt';
-import jwt from 'jsonwebtoken';
-import { createHash, randomUUID } from 'node:crypto';
-
-import { prisma } from '@src/shared/lib/prisma-client';
-import { loginAccountValidation, registerAccountValidation } from '@src/modules/auth/auth.validation';
-import { validate } from '@src/shared/validation/validation';
-import { ResponseError } from '@src/shared/error/response-error';
-
-import type { LoginAccountRequest, LoginAccountResponse, RegisterAccountRequest } from '@src/types/auth-type';
-
-// ---------------------------------------------------------------------------
-// Konfigurasi
-// ---------------------------------------------------------------------------
-
-// Aplikasi sengaja gagal start kalau secret tidak ada (tanpa fallback hardcoded).
-// Pastikan dotenv sudah di-load sebelum file ini di-import.
-const getRequiredEnv = (name: string): string => {
-  const value = process.env[name];
-  if (!value) {
-    throw new Error(`Environment variable ${name} wajib diisi`);
-  }
-  return value;
-};
-
-const ACCESS_TOKEN_SECRET = getRequiredEnv('ACCESS_TOKEN_SECRET');
-const REFRESH_TOKEN_SECRET = getRequiredEnv('REFRESH_TOKEN_SECRET');
-
-if (ACCESS_TOKEN_SECRET === REFRESH_TOKEN_SECRET) {
-  throw new Error('ACCESS_TOKEN_SECRET dan REFRESH_TOKEN_SECRET harus berbeda');
-}
-
-const ACCESS_TOKEN_TTL_SECONDS = 15 * 60; // 15 menit
-const REFRESH_TOKEN_TTL_SECONDS = 7 * 24 * 60 * 60; // 7 hari
-const BCRYPT_ROUNDS = 12;
-
-// Hash palsu untuk menyamakan waktu respons saat akun tidak ditemukan
-// (mencegah user enumeration lewat timing attack).
-const DUMMY_HASH = bcrypt.hashSync('dummy-password-for-timing', BCRYPT_ROUNDS);
-
-type AccountIdentity = { id: string; email: string; role: string };
-
-// ---------------------------------------------------------------------------
-// Helper token
-// ---------------------------------------------------------------------------
-
-const sha256 = (value: string) => createHash('sha256').update(value).digest('hex');
-
-const generateAccessToken = (account: AccountIdentity) => {
-  return jwt.sign(
-    { id: account.id, email: account.email, role: account.role, type: 'access' },
-    ACCESS_TOKEN_SECRET,
-    { expiresIn: ACCESS_TOKEN_TTL_SECONDS, algorithm: 'HS256' }
-  );
-};
-
-// Membuat refresh token baru dan menyimpan HASH-nya ke database.
-// jwtid (jti) memastikan setiap token unik walau dibuat di detik yang sama.
-const issueRefreshToken = async (account: AccountIdentity) => {
-  const token = jwt.sign(
-    { id: account.id, type: 'refresh' },
-    REFRESH_TOKEN_SECRET,
-    {
-      expiresIn: REFRESH_TOKEN_TTL_SECONDS,
-      algorithm: 'HS256',
-      jwtid: randomUUID(),
-    }
-  );
-
-  await prisma.refreshToken.create({
+  await db.refreshToken.create({
     data: {
-      tokenHash: sha256(token),
-      accountId: account.id,
-      expiredAt: new Date(Date.now() + REFRESH_TOKEN_TTL_SECONDS * 1000),
+      userId: user.id,
+      tokenHash: sha256(refreshToken),
+      expiresAt: new Date(Date.now() + REFRESH_TOKEN_TTL_MS),
     },
   });
 
-  return token;
+  return {
+    accessToken: signAccessToken({ sub: user.id, roleId: user.roleId }),
+    refreshToken,
+  };
 };
 
-const testRefreshToken = async (account: AccountIdentity, hashCookie:any) => {
-  const token = jwt.sign(
-    { id: account.id, type: 'refresh' },
-    REFRESH_TOKEN_SECRET,
-    {
-      expiresIn: REFRESH_TOKEN_TTL_SECONDS,
-      algorithm: 'HS256',
-      jwtid: randomUUID(),
+const userSelect = {
+  id: true,
+  email: true,
+  username: true,
+  roleId: true,
+  isActive: true,
+  role: { select: { name: true, isSuperAdmin: true } },
+} as const;
+
+export const login = async (input: LoginInput) => {
+  // email dan username disimpan lowercase saat register
+  const identifier = input.identifier.toLowerCase();
+
+  const user = await prismaClient.user.findFirst({
+    where: { OR: [{ email: identifier }, { username: identifier }] },
+    select: { ...userSelect, passwordHash: true },
+  });
+
+  const passwordMatches = await bcrypt.compare(input.password, user?.passwordHash ?? DUMMY_HASH);
+  if (!user || !passwordMatches) {
+    throw new ResponseError(401, "Identifier atau password salah");
+  }
+  if (!user.isActive) {
+    throw new ResponseError(403, "Akun tidak aktif");
+  }
+
+  const tokens = await issueTokens(user);
+
+  return {
+    ...tokens,
+    user: {
+      id: user.id,
+      email: user.email,
+      username: user.username,
+      role: user.role.name,
+      isSuperAdmin: user.role.isSuperAdmin,
+    },
+  };
+};
+
+// Refresh token dirotasi: token lama dihapus, token baru diterbitkan.
+export const refresh = async (input: RefreshTokenInput) => {
+  const stored = await prismaClient.refreshToken.findUnique({
+    where: { tokenHash: sha256(input.refreshToken) },
+    include: { user: { select: userSelect } },
+  });
+
+  if (!stored || stored.expiresAt <= new Date()) {
+    throw new ResponseError(401, "Refresh token tidak valid atau sudah kedaluwarsa");
+  }
+  if (!stored.user.isActive) {
+    throw new ResponseError(403, "Akun tidak aktif");
+  }
+
+  return prismaClient.$transaction(async (tx) => {
+    // deleteMany + cek count: kalau dua request memakai token yang sama bersamaan,
+    // hanya satu yang berhasil menghapus, yang lain ditolak.
+    const { count } = await tx.refreshToken.deleteMany({ where: { id: stored.id } });
+    if (count !== 1) {
+      throw new ResponseError(401, "Refresh token tidak valid atau sudah kedaluwarsa");
     }
-  );
-
-  await prisma.refreshToken.update({
-    where: {
-      id:hashCookie
-    },
-    data: {
-      tokenHash: sha256(token),
-      accountId: account.id,
-      expiredAt: new Date(Date.now() + REFRESH_TOKEN_TTL_SECONDS * 1000),
-    },
-  });
-
-  return token;
-};
-
-const verifyRefreshJwt = (token: string): { id: string } => {
-  try {
-    const decoded = jwt.verify(token, REFRESH_TOKEN_SECRET, { algorithms: ['HS256'] });
-
-    if (typeof decoded === 'string' || decoded.type !== 'refresh' || !decoded.id) {
-      throw new Error('Payload refresh token tidak valid');
-    }
-
-    return { id: decoded.id as string };
-  } catch {
-    throw new ResponseError(401, 'Refresh token tidak valid atau sudah kedaluwarsa');
-  }
-};
-
-const revokeAllTokensOfAccount = (accountId: string) => {
-  return prisma.refreshToken.updateMany({
-    where: { accountId, revokedAt: null },
-    data: { revokedAt: new Date() },
+    return issueTokens(stored.user, tx);
   });
 };
 
-// ---------------------------------------------------------------------------
-// Service
-// ---------------------------------------------------------------------------
-
-const login = async (dataRequest: LoginAccountRequest): Promise<LoginAccountResponse> => {
-  const { identifier, password } = validate(loginAccountValidation, dataRequest);
-
-  const account = await prisma.account.findFirst({
-    where: {
-      OR: [{ email: identifier }, { username: identifier }],
-    },
-  });
-
-  const isPasswordValid = await bcrypt.compare(password, account?.password ?? DUMMY_HASH);
-
-  if (!account || !isPasswordValid) {
-    throw new ResponseError(401, 'Email atau password salah');
-  }
-
-  const accessToken = generateAccessToken(account);
-  const refreshToken = await issueRefreshToken(account);
-
-  return { accessToken, refreshToken };
-};
-
-const register = async (dataRequest: RegisterAccountRequest) => {
-  const { email, username, password } = validate(registerAccountValidation, dataRequest);
-
-  const existingAccount = await prisma.account.findFirst({
-    where: {
-      OR: [{ email }, { username }],
-    },
-    select: { id: true },
-  });
-
-  if (existingAccount) {
-    throw new ResponseError(409, 'Username atau email sudah digunakan');
-  }
-
-  const hashedPassword = await bcrypt.hash(password, BCRYPT_ROUNDS);
-
-  try {
-    // select: hanya field aman yang dikembalikan, hash password TIDAK ikut
-    return await prisma.account.create({
-      data: { username, email, password: hashedPassword },
-      select: { id: true, username: true, email: true, role: true },
-    });
-  } catch (e) {
-    // Race condition: dua request bersamaan lolos pengecekan di atas,
-    // unique constraint database yang menjadi penjaga terakhir.
-    if ((e as { code?: string })?.code === 'P2002') {
-      throw new ResponseError(409, 'Username atau email sudah digunakan');
-    }
-    throw e;
-  }
-};
-
-const refresh_token = async (cookieToken?: string) => {
-  if (!cookieToken) {
-    throw new ResponseError(401, 'Refresh token tidak ditemukan');
-  }
-
-  // 1. Verifikasi signature, expiry, algoritma, dan tipe token
-  const decoded = verifyRefreshJwt(cookieToken);
-
-  // 2. Token harus ada di database
-  const stored = await prisma.refreshToken.findUnique({
-    where: { tokenHash: sha256(cookieToken) },
-  });
-
-  if (!stored || stored.accountId !== decoded.id) {
-    throw new ResponseError(401, 'Refresh token tidak valid');
-  }
-
-  // 3. Token yang sudah dicabut tapi dipakai lagi = indikasi pencurian (reuse detection).
-  //    Cabut semua sesi akun ini dan paksa login ulang.
-  if (stored.revokedAt) {
-    await revokeAllTokensOfAccount(stored.accountId);
-    throw new ResponseError(401, 'Sesi tidak valid, silakan login ulang');
-  }
-
-  if (stored.expiredAt < new Date()) {
-    throw new ResponseError(401, 'Refresh token sudah kedaluwarsa');
-  }
-
-  // 4. Akun harus masih ada (kalau dihapus/dinonaktifkan, tambahkan pengecekan status di sini)
-  const account = await prisma.account.findUnique({
-    where: { id: stored.accountId },
-    select: { id: true, email: true, role: true },
-  });
-
-  if (!account) {
-    await revokeAllTokensOfAccount(stored.accountId);
-    throw new ResponseError(401, 'Akun tidak ditemukan');
-  }
-
-  // 5. Rotation: cabut token lama secara atomik.
-  //    updateMany + syarat revokedAt: null memastikan hanya SATU request yang berhasil
-  //    kalau token yang sama dipakai bersamaan.
-  const revoked = await prisma.refreshToken.updateMany({
-    where: { id: stored.id, revokedAt: null },
-    data: { revokedAt: new Date() },
-  });
-
-  if (revoked.count !== 1) {
-    await revokeAllTokensOfAccount(stored.accountId);
-    throw new ResponseError(401, 'Sesi tidak valid, silakan login ulang');
-  }
-
-  // 6. Terbitkan pasangan token baru
-  const newAccessToken = generateAccessToken(account);
-  const newRefreshToken = await issueRefreshToken(account);
-
-  return { newAccessToken, newRefreshToken };
-};
-
-// Idempotent: tidak melempar error kalau token tidak valid / sudah dicabut,
-// karena tujuannya hanya memastikan sesi ini tidak bisa dipakai lagi.
-const logout = async (cookieToken: string) => {
-  await prisma.refreshToken.updateMany({
-    where: { tokenHash: sha256(cookieToken), revokedAt: null },
-    data: { revokedAt: new Date() },
+// Idempotent: token yang sudah tidak ada tidak dianggap error.
+export const logout = async (input: LogoutInput) => {
+  await prismaClient.refreshToken.deleteMany({
+    where: { tokenHash: sha256(input.refreshToken) },
   });
 };
 
-// Opsional: panggil berkala (cron) untuk membersihkan token kedaluwarsa dari DB.
-const cleanupExpiredRefreshTokens = async () => {
-  const { count } = await prisma.refreshToken.deleteMany({
-    where: { expiredAt: { lt: new Date() } },
+// Setelah password berubah, semua sesi (refresh token) user dicabut, termasuk di perangkat lain.
+export const changePassword = async (userId: string, input: ChangePasswordInput) => {
+  const user = await prismaClient.user.findUnique({
+    where: { id: userId },
+    select: { passwordHash: true },
   });
-  return count;
-};
+  if (!user) {
+    throw new ResponseError(404, "User tidak ditemukan");
+  }
 
-export default {
-  register,
-  login,
-  refresh_token,
-  logout,
-  cleanupExpiredRefreshTokens,
+  const oldPasswordMatches = await bcrypt.compare(input.oldPassword, user.passwordHash);
+  if (!oldPasswordMatches) {
+    // 400, bukan 401, supaya klien tidak mengira sesinya habis lalu logout otomatis
+    throw new ResponseError(400, "Password lama salah");
+  }
+
+  const passwordHash = await bcrypt.hash(input.newPassword, BCRYPT_ROUNDS);
+
+  await prismaClient.$transaction([
+    prismaClient.user.update({ where: { id: userId }, data: { passwordHash } }),
+    prismaClient.refreshToken.deleteMany({ where: { userId } }),
+  ]);
 };

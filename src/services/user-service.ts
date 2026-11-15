@@ -8,7 +8,7 @@ import {
   registerUserValidation,
   updateUserValidation } from "@src/shared/validation/user-validation";
 import { prismaClient } from "@src/lib/database";
-import { ResponseError } from "@src/shared/error/response-error.js";
+import { ResponseError } from "@src/shared/errors/response-error.js";
 
 import type { 
   LoginUserRequest, 

@@ -1,4 +1,4 @@
-import {ResponseError} from "@src/shared/error/response-error.js";
+import {ResponseError} from "@src/shared/errors/response-error.js";
 
 import type { 
   NextFunction,

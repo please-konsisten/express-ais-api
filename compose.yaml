@@ -4,25 +4,33 @@ services:
       context: .
       target: development
     container_name: ais-api-dev
+    restart: unless-stopped
     ports:
-      - "3001:3000"
+      - "3000:3000"
     volumes:
       - .:/app
+      - node_modules:/app/node_modules
     environment:
       - NODE_ENV=development
       - PORT=3000
-      - DATABASE_URL=postgresql://root:example@172.22.0.1:5432/db_ais?schema=public
-      - REDIS_URL=redis://ais-redis-dev:6379 
+      - DATABASE_URL=${DATABASE_URL:-postgresql://root:example@172.22.0.1:5432/db_ais?schema=public}
       - ACCESS_TOKEN_SECRET=${ACCESS_TOKEN_SECRET}
       - REFRESH_TOKEN_SECRET=${REFRESH_TOKEN_SECRET}
-    depends_on:
-      - redis
-    
-  redis:
-    container_name: ais-redis-dev
-    image: redis:7-alpine
-    ports:
-      - "6379:6379"
+    networks:
+      - ais-network
+
+  # Dipakai hanya saat dibutuhkan (install/hapus library).
+  # Tidak ikut jalan pada `docker compose up`.
+  node:
+    image: node:26-slim
+    profiles: ["tools"]
+    user: node
+    working_dir: /app
+    volumes:
+      - .:/app
+
+volumes:
+  node_modules:
 
 networks:
   ais-network:

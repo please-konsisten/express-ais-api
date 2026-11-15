@@ -1,8 +1,6 @@
 // This is your Prisma schema file,
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
-// Get a free hosted Postgres database in seconds: `npx create-db`
-
 generator client {
   provider = "prisma-client"
   output   = "../src/generated/prisma"
@@ -12,190 +10,281 @@ datasource db {
   provider = "postgresql"
 }
 
-// enum Role {
-//   STUDENT
-//   STAFF
-//   ADMIN
-// }
-
-
-// model Account {
-//   id            String         @id @default(uuid()) @db.VarChar(100)
-//   username      String         @unique @db.VarChar(50)
-//   email         String         @unique @db.VarChar(150)
-//   password      String         @db.VarChar(255) 
-//   role          Role           @default(STUDENT) 
-//   createdAt     DateTime       @default(now())
-//   updatedAt     DateTime       @updatedAt
-
-//   refreshTokens RefreshToken[] 
-//   user          User?
-
-//   @@map("accounts")
-// }
-
-// model RefreshToken {
-//   id           String   @id @default(uuid()) @db.VarChar(100)
-//   token        String   @unique @db.VarChar(500)
-//   expiredAt    DateTime
-//   createdAt    DateTime @default(now())
-//   updatedAt    DateTime @updatedAt
-
-//   accountId    String   @db.VarChar(100)
-//   account      Account  @relation(fields: [accountId], references: [id], onDelete: Cascade)
-
-//   @@map("refresh_tokens")
-// }
-
-// model User {
-//   id          String   @id @default(uuid()) @db.VarChar(100)
-//   fullName    String   @db.VarChar(150)
-//   phoneNumber String?  @db.VarChar(20)
-//   gender      String?  @db.VarChar(10) 
-//   avatarUrl   String?  @db.VarChar(255)
-
-//   accountId   String   @unique @db.VarChar(100)
-//   account     Account  @relation(fields: [accountId], references: [id], onDelete: Cascade)
-
-//   studentProfile StudentProfile?
-//   staffProfile   StaffProfile?
-//   adminProfile   AdminProfile?
-
-//   @@map("users")
-// }
-
-// model StudentProfile {
-//   id            String   @id @default(uuid()) @db.VarChar(100)
-//   nim           String   @unique @db.VarChar(20)
-//   major         String   @db.VarChar(100) 
-//   faculty       String   @db.VarChar(100)
-//   currentPeriod Int      @default(1)
-//   admissionYear Int
-//   status        String   @default("ACTIVE")
-
-//   userId        String   @unique @db.VarChar(100)
-//   user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-//   @@map("student_profiles")
-// }
-
-// model StaffProfile {
-//   id            String   @id @default(uuid()) @db.VarChar(100)
-//   nidn          String?  @unique @db.VarChar(20)
-//   nip           String   @unique @db.VarChar(20)
-//   department    String   @db.VarChar(100)
-//   position      String   @db.VarChar(50)
-//   status        String   @default("ACTIVE")
-
-//   userId        String   @unique @db.VarChar(100)
-//   user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-//   @@map("staff_profiles")
-// }
-
-// model AdminProfile {
-//   id            String   @id @default(uuid()) @db.VarChar(100)
-//   accessLevel   String   @default("SUPERADMIN")  
-//   managedScope  String?  @db.VarChar(100)
-
-//   userId        String   @unique @db.VarChar(100)
-//   user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-//   @@map("admin_profiles")
-// }
-
-
-enum Role {
-  STUDENT
-  STAFF
-  ADMIN
+enum AttendanceStatus {
+  HADIR
+  IZIN
+  SAKIT
+  ALPA
 }
 
+model Role {
+  id           String   @id @default(uuid()) @db.Uuid
+  name         String   @unique @db.VarChar(100)
+  isSuperAdmin Boolean  @default(false)
+  createdAt    DateTime @default(now())
+
+  accounts        Account[]
+  rolePermissions RolePermission[]
+
+  @@map("roles")
+}
+
+model Permission {
+  id          String  @id @default(uuid()) @db.Uuid
+  slug        String  @unique @db.VarChar(100)
+  description String? @db.VarChar(255)
+
+  rolePermissions RolePermission[]
+
+  @@map("permissions")
+}
+
+model RolePermission {
+  roleId       String @db.Uuid
+  permissionId String @db.Uuid
+
+  role       Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  permission Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+
+  @@id([roleId, permissionId])
+  @@index([permissionId])
+  @@map("role_permissions")
+}
 
 model Account {
-  id            String         @id @default(uuid()) @db.VarChar(100)
-  username      String         @unique @db.VarChar(50)
-  email         String         @unique @db.VarChar(150)
-  password      String         @db.VarChar(255) 
-  role          Role           @default(STUDENT) 
-  createdAt     DateTime       @default(now())
-  updatedAt     DateTime       @updatedAt
+  id           String   @id @default(uuid()) @db.Uuid
+  email        String   @unique @db.VarChar(255)
+  username     String   @unique @db.VarChar(255)
+  hashPassword String   @db.VarChar(255)
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 
-  refreshTokens RefreshToken[] 
-  user          User?
+  roleId String @db.Uuid
+  role   Role   @relation(fields: [roleId], references: [id], onDelete: Restrict)
 
+  refreshTokens RefreshToken[]
+  student       Student?
+  teacher       Teacher?
+
+  @@index([roleId])
   @@map("accounts")
 }
 
 model RefreshToken {
-  id           String    @id @default(uuid()) @db.VarChar(100)
-  tokenHash    String    @unique @db.VarChar(64) 
-  expiredAt    DateTime
-  revokedAt    DateTime? 
-  createdAt    DateTime  @default(now())
-  updatedAt    DateTime  @updatedAt
+  id        String    @id @default(uuid()) @db.Uuid
+  tokenHash String    @unique @db.VarChar(64)
+  expiredAt DateTime
+  revokedAt DateTime?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
 
-  accountId    String    @db.VarChar(100)
-  account      Account   @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  accountId String  @db.Uuid
+  account   Account @relation(fields: [accountId], references: [id], onDelete: Cascade)
 
   @@index([accountId])
   @@index([expiredAt])
   @@map("refresh_tokens")
 }
 
-model User {
-  id          String   @id @default(uuid()) @db.VarChar(100)
-  fullName    String   @db.VarChar(150)
-  phoneNumber String?  @db.VarChar(20)
-  gender      String?  @db.VarChar(10) 
-  avatarUrl   String?  @db.VarChar(255)
+model Student {
+  id       String @id @default(uuid()) @db.Uuid
+  nim      String @unique @db.VarChar(30)
+  fullName String @db.VarChar(255)
 
-  accountId   String   @unique @db.VarChar(100)
-  account     Account  @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  accountId String  @unique @db.Uuid
+  account   Account @relation(fields: [accountId], references: [id], onDelete: Cascade)
 
-  studentProfile StudentProfile?
-  staffProfile   StaffProfile?
-  adminProfile   AdminProfile?
+  enrollments       Enrollment[]
+  submissions       Submission[]
+  attendanceRecords AttendanceRecord[]
 
-  @@map("users")
+  @@map("students")
 }
 
-model StudentProfile {
-  id            String   @id @default(uuid()) @db.VarChar(100)
-  nim           String   @unique @db.VarChar(20)
-  major         String   @db.VarChar(100) 
-  faculty       String   @db.VarChar(100)
-  currentPeriod Int      @default(1)
-  admissionYear Int
-  status        String   @default("ACTIVE")
+model Teacher {
+  id       String @id @default(uuid()) @db.Uuid
+  nip      String @unique @db.VarChar(30)
+  fullName String @db.VarChar(255)
 
-  userId        String   @unique @db.VarChar(100)
-  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accountId String  @unique @db.Uuid
+  account   Account @relation(fields: [accountId], references: [id], onDelete: Cascade)
 
-  @@map("student_profiles")
+  courseOfferings CourseOffering[]
+
+  @@map("teachers")
 }
 
-model StaffProfile {
-  id            String   @id @default(uuid()) @db.VarChar(100)
-  nidn          String?  @unique @db.VarChar(20)
-  nip           String   @unique @db.VarChar(20)
-  department    String   @db.VarChar(100)
-  position      String   @db.VarChar(50)
-  status        String   @default("ACTIVE")
+model AcademicTerm {
+  id        String   @id @default(uuid()) @db.Uuid
+  name      String   @db.VarChar(100)
+  startDate DateTime @db.Date
+  endDate   DateTime @db.Date
+  isActive  Boolean  @default(false)
 
-  userId        String   @unique @db.VarChar(100)
-  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  courseOfferings CourseOffering[]
 
-  @@map("staff_profiles")
+  @@map("academic_terms")
 }
 
-model AdminProfile {
-  id            String   @id @default(uuid()) @db.VarChar(100)
-  accessLevel   String   @default("SUPERADMIN")  
-  managedScope  String?  @db.VarChar(100)
+model Subject {
+  id      String @id @default(uuid()) @db.Uuid
+  code    String @unique @db.VarChar(20)
+  name    String @db.VarChar(255)
+  credits Int?   @db.SmallInt
 
-  userId        String   @unique @db.VarChar(100)
-  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  courseOfferings CourseOffering[]
 
-  @@map("admin_profiles")
+  @@map("subjects")
+}
+
+model ClassGroup {
+  id   String @id @default(uuid()) @db.Uuid
+  name String @db.VarChar(100)
+
+  courseOfferings CourseOffering[]
+
+  @@map("classes")
+}
+
+model CourseOffering {
+  id        String @id @default(uuid()) @db.Uuid
+  termId    String @db.Uuid
+  subjectId String @db.Uuid
+  classId   String @db.Uuid
+  teacherId String @db.Uuid
+
+  term    AcademicTerm @relation(fields: [termId], references: [id], onDelete: Restrict)
+  subject Subject      @relation(fields: [subjectId], references: [id], onDelete: Restrict)
+  class   ClassGroup   @relation(fields: [classId], references: [id], onDelete: Restrict)
+  teacher Teacher      @relation(fields: [teacherId], references: [id], onDelete: Restrict)
+
+  schedules          Schedule[]
+  enrollments        Enrollment[]
+  materials          Material[]
+  assignments        Assignment[]
+  attendanceSessions AttendanceSession[]
+
+  @@unique([termId, subjectId, classId])
+  @@index([teacherId])
+  @@index([subjectId])
+  @@index([classId])
+  @@map("course_offerings")
+}
+
+model Schedule {
+  id        String   @id @default(uuid()) @db.Uuid
+  dayOfWeek Int      @db.SmallInt
+  startTime DateTime @db.Time(0)
+  endTime   DateTime @db.Time(0)
+  room      String?  @db.VarChar(50)
+
+  offeringId String         @db.Uuid
+  offering   CourseOffering @relation(fields: [offeringId], references: [id], onDelete: Cascade)
+
+  @@index([offeringId])
+  @@map("schedules")
+}
+
+model Enrollment {
+  id String @id @default(uuid()) @db.Uuid
+
+  offeringId String         @db.Uuid
+  studentId  String         @db.Uuid
+  offering   CourseOffering @relation(fields: [offeringId], references: [id], onDelete: Cascade)
+  student    Student        @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  grades Grade[]
+
+  @@unique([offeringId, studentId])
+  @@index([studentId])
+  @@map("enrollments")
+}
+
+model Material {
+  id          String   @id @default(uuid()) @db.Uuid
+  title       String   @db.VarChar(255)
+  description String?  @db.Text
+  fileUrl     String?  @db.VarChar(500)
+  createdAt   DateTime @default(now())
+
+  offeringId String         @db.Uuid
+  offering   CourseOffering @relation(fields: [offeringId], references: [id], onDelete: Cascade)
+
+  @@index([offeringId])
+  @@map("materials")
+}
+
+model Assignment {
+  id          String    @id @default(uuid()) @db.Uuid
+  title       String    @db.VarChar(255)
+  description String?   @db.Text
+  dueAt       DateTime?
+  maxScore    Decimal   @default(100) @db.Decimal(5, 2)
+  createdAt   DateTime  @default(now())
+
+  offeringId String         @db.Uuid
+  offering   CourseOffering @relation(fields: [offeringId], references: [id], onDelete: Cascade)
+
+  submissions Submission[]
+
+  @@index([offeringId])
+  @@map("assignments")
+}
+
+model Submission {
+  id          String   @id @default(uuid()) @db.Uuid
+  fileUrl     String?  @db.VarChar(500)
+  submittedAt DateTime @default(now())
+  score       Decimal? @db.Decimal(5, 2)
+  feedback    String?  @db.Text
+
+  assignmentId String     @db.Uuid
+  studentId    String     @db.Uuid
+  assignment   Assignment @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
+  student      Student    @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@unique([assignmentId, studentId])
+  @@index([studentId])
+  @@map("submissions")
+}
+
+model AttendanceSession {
+  id          String   @id @default(uuid()) @db.Uuid
+  meetingNo   Int      @db.SmallInt
+  meetingDate DateTime @db.Date
+
+  offeringId String         @db.Uuid
+  offering   CourseOffering @relation(fields: [offeringId], references: [id], onDelete: Cascade)
+
+  records AttendanceRecord[]
+
+  @@unique([offeringId, meetingNo])
+  @@map("attendance_sessions")
+}
+
+model AttendanceRecord {
+  id     String           @id @default(uuid()) @db.Uuid
+  status AttendanceStatus
+
+  sessionId String            @db.Uuid
+  studentId String            @db.Uuid
+  session   AttendanceSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  student   Student           @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@unique([sessionId, studentId])
+  @@index([studentId])
+  @@map("attendance_records")
+}
+
+model Grade {
+  id        String  @id @default(uuid()) @db.Uuid
+  component String  @db.VarChar(30)
+  score     Decimal @db.Decimal(5, 2)
+
+  enrollmentId String     @db.Uuid
+  enrollment   Enrollment @relation(fields: [enrollmentId], references: [id], onDelete: Cascade)
+
+  @@unique([enrollmentId, component])
+  @@map("grades")
 }

@@ -1,7 +1,7 @@
 // Data master akademik: periode (academic term), mata kuliah (subject), dan kelas (class).
 import Joi from "joi";
-import { paginationKeys } from "@src/shared/validation/common-validation";
-import type { PaginationQuery } from "@src/shared/validation/common-validation";
+import { paginationKeys } from "@src/shared/schemas/common.schema";
+import type { PaginationQuery } from "@src/shared/schemas/common.schema";
 
 // ---------- tipe ----------
 export type CreateAcademicTermInput = {
@@ -16,6 +16,8 @@ export type UpdateAcademicTermInput = {
   endDate?: Date;
   isActive?: boolean;
 };
+
+export type ListAcademicTermQuery = PaginationQuery & { isActive?: boolean };
 
 export type CreateSubjectInput = { code: string; name: string; credits?: number | null };
 export type UpdateSubjectInput = { code?: string; name?: string; credits?: number | null };
@@ -48,18 +50,23 @@ export const updateAcademicTermSchema = Joi.object<UpdateAcademicTermInput>({
   isActive: Joi.boolean(),
 }).min(1);
 
+export const listAcademicTermQuerySchema = Joi.object<ListAcademicTermQuery>({
+  ...paginationKeys,
+  isActive: Joi.boolean().optional(),
+});
+
 // ---------- subject ----------
 // Kode mata kuliah sudah dipakai? Dicek di service.
-const code = Joi.string().trim().uppercase().max(20);
+const subjectCode = Joi.string().trim().uppercase().max(20);
 
 export const createSubjectSchema = Joi.object<CreateSubjectInput>({
-  code: code.required(),
+  code: subjectCode.required(),
   name: Joi.string().trim().min(2).max(255).required(),
   credits: Joi.number().integer().min(0).max(32767).allow(null).optional(),
 });
 
 export const updateSubjectSchema = Joi.object<UpdateSubjectInput>({
-  code: code,
+  code: subjectCode,
   name: Joi.string().trim().min(2).max(255),
   credits: Joi.number().integer().min(0).max(32767).allow(null),
 }).min(1);

@@ -15,7 +15,7 @@ import {
   updateUserSchema,
 } from "@src/modules/user/user.schema";
 import { PERMISSIONS as P } from "@src/shared/constants/permissions";
-import { authenticate, requirePermission } from "@src/shared/middleware/auth-middleware";
+import { authenticate, requirePermission } from "@src/shared/middleware/auth.middleware";
 import { idParamSchema } from "@src/shared/validation/common-validation";
 import { validate } from "@src/shared/validation/validation";
 

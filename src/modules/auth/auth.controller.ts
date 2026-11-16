@@ -1,5 +1,5 @@
 import type { Request, Response } from "express";
-import { getAuthUser } from "@src/shared/middleware/auth-middleware";
+import { getAuthUser } from "@src/shared/middleware/auth.middleware";
 import * as authService from "./auth.service";
 import type { ChangePasswordInput, LoginInput, LogoutInput, RefreshTokenInput } from "./auth.schema";
 

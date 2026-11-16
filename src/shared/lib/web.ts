@@ -6,9 +6,9 @@ import swaggerUi from 'swagger-ui-express';
 import SwaggerParser from "@apidevtools/swagger-parser";
 import path from 'path';
 import { routes } from '@src/routes';
-import { errorMiddleware } from '@src/shared/middleware/error-middleware';
+import { errorMiddleware } from '@src/shared/middleware/error.middleware';
 import cors from "cors"
-import { task } from "@src/crons/token-delete";
+import { task } from "@src/crons/tokenDelete";
 import { logger } from "@src/shared/lib/logging";
 
 // Kegagalan memuat dokumentasi tidak boleh mematikan API.

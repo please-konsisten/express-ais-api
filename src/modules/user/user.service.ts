@@ -1,5 +1,5 @@
 import type { Prisma } from "@src/generated/prisma/client";
-import { ResponseError } from "@src/shared/errors/response-error";
+import { ResponseError } from "@src/shared/errors/responseError";
 import { prismaClient } from "@src/shared/lib/database";
 import { pageMeta, toSkipTake } from "@src/shared/lib/pagination";
 import { hashPassword } from "@src/shared/lib/password";

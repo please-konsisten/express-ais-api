@@ -1,36 +1,25 @@
-
 import cron from "node-cron"
 
-import {prisma} from "@src/lib/prisma-client"
+import { prismaClient } from "@src/shared/lib/database"
+import { logger } from "@src/shared/lib/logging"
 
-// Jalankan SETIAP 1 MENIT (* * * * *)
-export const task = cron.schedule('* * * * *', async () => {
-  console.log('Menjalankan pembersihan token usang...');
-  
+// Refresh token yang sudah kedaluwarsa atau dicabut tidak bisa dipakai lagi (dicek di auth.service),
+// jadi pembersihan cukup sesekali: setiap jam pada menit ke-0.
+export const task = cron.schedule('0 * * * *', async () => {
   try {
-    const now = new Date();
-    
-    // Tentukan batas waktu: 1 menit (60.000 milidetik) yang lalu
-    const batasWaktuHapus = new Date(now.getTime() - 1 * 1000); 
-
-    const deleted = await prisma.refreshToken.deleteMany({
+    const deleted = await prismaClient.refreshToken.deleteMany({
       where: {
         OR: [
-          // 1. Hapus token yang sudah di-revoke LEBIH DARI 1 menit lalu
-          // (Melewati grace period 1 menit yang kita buat sebelumnya)
-          { revokedAt: { lt: batasWaktuHapus } }, 
-          
-          // 2. Hapus token yang memang sudah kedaluwarsa secara alami
-          { expiredAt: { lt: now } }       
-        ]
-      }
+          { expiredAt: { lt: new Date() } },
+          { revokedAt: { not: null } },
+        ],
+      },
     });
 
     if (deleted.count > 0) {
-      console.log(`Pembersihan berhasil. ${deleted.count} token sampah dihapus.`);
+      logger.info(`Pembersihan refresh token: ${deleted.count} token dihapus`);
     }
   } catch (error) {
-    console.error('Gagal membersihkan token:', error);
+    logger.error('Gagal membersihkan refresh token', { error });
   }
 });
-     // resume

@@ -1,6 +1,6 @@
 import type { NextFunction, Request, Response } from "express";
 import { Prisma } from "@src/generated/prisma/client";
-import { ResponseError } from "@src/shared/errors/responseError";
+import { ResponseError } from "@src/shared/errors/response-error";
 import { logger } from "@src/shared/lib/logging";
 
 // Error 4xx bawaan library (mis. body-parser saat JSON rusak) membawa status + expose = true.

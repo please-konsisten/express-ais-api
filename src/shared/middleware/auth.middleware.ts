@@ -1,6 +1,6 @@
 import type { NextFunction, Request, Response } from "express";
 import type { PermissionSlug } from "@src/shared/constants/permissions";
-import { ResponseError } from "@src/shared/errors/responseError";
+import { ResponseError } from "@src/shared/errors/response-error";
 import { prismaClient } from "@src/shared/lib/database";
 import { verifyAccessToken } from "@src/shared/lib/jwt";
 

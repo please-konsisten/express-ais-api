@@ -3,7 +3,7 @@ import type { Prisma } from "@src/generated/prisma/client";
 import { prismaClient } from "@src/shared/lib/database";
 import { signAccessToken } from "@src/shared/lib/jwt";
 import { hashPassword, verifyPassword } from "@src/shared/lib/password";
-import { ResponseError } from "@src/shared/errors/responseError";
+import { ResponseError } from "@src/shared/errors/response-error";
 import type { ChangePasswordInput, LoginInput, LogoutInput, RefreshTokenInput } from "./auth.schema";
 
 const REFRESH_TOKEN_TTL_MS = 7 * 24 * 60 * 60 * 1000; // 7 hari

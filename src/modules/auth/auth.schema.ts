@@ -1,6 +1,6 @@
 // src/modules/auth/auth.schema.ts
 import Joi from "joi";
-import { existingPassword, strongPassword } from "@src/shared/validation/account-validation";
+import { existingPassword, strongPassword } from "@src/shared/schemas/account.schema";
 
 export type LoginInput = {
   identifier: string;

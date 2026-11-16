@@ -25,7 +25,7 @@ export const validate =
 
       // req.query bersifat read-only di Express 5, jadi simpan hasilnya di properti lain
       if (target === "query") {
-        (req as Request & { validatedQuery?: unknown }).validatedQuery = value;
+        req.validatedQuery = value;
       } else {
         req[target] = value;
       }

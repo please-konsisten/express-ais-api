@@ -10,9 +10,19 @@ export type AccessTokenPayload = {
   roleId: string;
 };
 
+const ALGORITHM = "HS256";
+
 export const signAccessToken = (payload: AccessTokenPayload): string =>
-  jwt.sign(payload, secret, { expiresIn: "15m" });
+  jwt.sign(payload, secret, { algorithm: ALGORITHM, expiresIn: "15m" });
 
 // Dipakai middleware authenticate. Melempar error jika token tidak valid atau kedaluwarsa.
-export const verifyAccessToken = (token: string): AccessTokenPayload =>
-  jwt.verify(token, secret) as unknown as AccessTokenPayload;
+// Algoritma dikunci agar token dengan algoritma lain (mis. "none") ditolak.
+export const verifyAccessToken = (token: string): AccessTokenPayload => {
+  const decoded = jwt.verify(token, secret, { algorithms: [ALGORITHM] });
+
+  if (typeof decoded === "string" || typeof decoded.sub !== "string" || typeof decoded["roleId"] !== "string") {
+    throw new jwt.JsonWebTokenError("Payload token tidak valid");
+  }
+
+  return { sub: decoded.sub, roleId: decoded["roleId"] };
+};

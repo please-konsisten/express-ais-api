@@ -1,4 +1,5 @@
 import type { Request, Response } from "express";
+import { getAuthUser } from "@src/shared/middleware/auth-middleware";
 import * as authService from "./auth.service";
 import type { ChangePasswordInput, LoginInput, LogoutInput, RefreshTokenInput } from "./auth.schema";
 
@@ -22,6 +23,6 @@ export const logout = async (req: Request, res: Response) => {
 
 // Butuh middleware authenticate yang mengisi req.user
 export const changePassword = async (req: Request, res: Response) => {
-  await authService.changePassword(req.user!.id, req.body as ChangePasswordInput);
+  await authService.changePassword(getAuthUser(req).id, req.body as ChangePasswordInput);
   res.status(200).json({ message: "Password berhasil diubah. Silakan login kembali." });
 };

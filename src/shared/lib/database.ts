@@ -41,6 +41,7 @@ prismaClient.$on('info', (e) => {
     logger.info(e);
 });
 
+// Parameter query sengaja tidak dicatat: isinya bisa berupa hash password, hash refresh token, dan email.
 prismaClient.$on('query', (e) => {
-    logger.info(e);
+    logger.debug({ query: e.query, duration: e.duration });
 });

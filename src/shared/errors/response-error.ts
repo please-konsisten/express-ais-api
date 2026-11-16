@@ -1,12 +1,11 @@
-
-
 class ResponseError extends Error {
-    constructor(status, message) {
-        super(message);
-        this.status = status;
-    }
+  readonly status: number;
+
+  constructor(status: number, message: string) {
+    super(message);
+    this.name = "ResponseError";
+    this.status = status;
+  }
 }
 
-export {
-    ResponseError
-}
+export { ResponseError };

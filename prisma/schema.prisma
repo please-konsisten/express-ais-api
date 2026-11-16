@@ -64,8 +64,8 @@ model Account {
   role   Role   @relation(fields: [roleId], references: [id], onDelete: Restrict)
 
   refreshTokens RefreshToken[]
-  student       Student?
-  teacher       Teacher?
+  student       StudentProfile?
+  teacher       TeacherProfile?
 
   @@index([roleId])
   @@map("accounts")
@@ -87,10 +87,24 @@ model RefreshToken {
   @@map("refresh_tokens")
 }
 
-model Student {
-  id       String @id @default(uuid()) @db.Uuid
-  nim      String @unique @db.VarChar(30)
-  fullName String @db.VarChar(255)
+enum AcademicStatus {
+  ACTIVE
+  LEAVE
+  GRADUATED
+  INACTIVE
+}
+
+model StudentProfile {
+  id             String         @id @default(uuid()) @db.Uuid
+  nim            String         @unique @db.VarChar(30)
+  fullName       String         @db.VarChar(255)
+  phoneNumber    String?        @db.VarChar(20)
+  address        String?        @db.Text
+  studyProgram   String         @db.VarChar(100)
+  batchYear      Int
+  semester       Int            @default(1)
+  academicStatus AcademicStatus @default(ACTIVE)
+  avatarUrl      String?        @db.Text
 
   accountId String  @unique @db.Uuid
   account   Account @relation(fields: [accountId], references: [id], onDelete: Cascade)
@@ -99,20 +113,35 @@ model Student {
   submissions       Submission[]
   attendanceRecords AttendanceRecord[]
 
-  @@map("students")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("student_profiles")
 }
 
-model Teacher {
-  id       String @id @default(uuid()) @db.Uuid
-  nip      String @unique @db.VarChar(30)
-  fullName String @db.VarChar(255)
+model TeacherProfile {
+  id             String  @id @default(uuid()) @db.Uuid
+  nip            String  @unique @db.VarChar(30)
+  nidn           String? @unique @db.VarChar(30)
+  titlePrefix    String? @db.VarChar(50)
+  fullName       String  @db.VarChar(255)
+  titleSuffix    String? @db.VarChar(100)
+  phoneNumber    String? @db.VarChar(20)
+  department     String? @db.VarChar(100)
+  officeLocation String? @db.VarChar(100)
+  expertise      String? @db.Text
+  avatarUrl      String? @db.Text
+  isActive       Boolean @default(true)
 
   accountId String  @unique @db.Uuid
   account   Account @relation(fields: [accountId], references: [id], onDelete: Cascade)
 
   courseOfferings CourseOffering[]
 
-  @@map("teachers")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("teacher_profiles")
 }
 
 model AcademicTerm {
@@ -154,10 +183,10 @@ model CourseOffering {
   classId   String @db.Uuid
   teacherId String @db.Uuid
 
-  term    AcademicTerm @relation(fields: [termId], references: [id], onDelete: Restrict)
-  subject Subject      @relation(fields: [subjectId], references: [id], onDelete: Restrict)
-  class   ClassGroup   @relation(fields: [classId], references: [id], onDelete: Restrict)
-  teacher Teacher      @relation(fields: [teacherId], references: [id], onDelete: Restrict)
+  term    AcademicTerm   @relation(fields: [termId], references: [id], onDelete: Restrict)
+  subject Subject        @relation(fields: [subjectId], references: [id], onDelete: Restrict)
+  class   ClassGroup     @relation(fields: [classId], references: [id], onDelete: Restrict)
+  teacher TeacherProfile @relation(fields: [teacherId], references: [id], onDelete: Restrict)
 
   schedules          Schedule[]
   enrollments        Enrollment[]
@@ -192,7 +221,7 @@ model Enrollment {
   offeringId String         @db.Uuid
   studentId  String         @db.Uuid
   offering   CourseOffering @relation(fields: [offeringId], references: [id], onDelete: Cascade)
-  student    Student        @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  student    StudentProfile @relation(fields: [studentId], references: [id], onDelete: Cascade)
 
   grades Grade[]
 
@@ -239,10 +268,10 @@ model Submission {
   score       Decimal? @db.Decimal(5, 2)
   feedback    String?  @db.Text
 
-  assignmentId String     @db.Uuid
-  studentId    String     @db.Uuid
-  assignment   Assignment @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
-  student      Student    @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  assignmentId String         @db.Uuid
+  studentId    String         @db.Uuid
+  assignment   Assignment     @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
+  student      StudentProfile @relation(fields: [studentId], references: [id], onDelete: Cascade)
 
   @@unique([assignmentId, studentId])
   @@index([studentId])
@@ -270,7 +299,7 @@ model AttendanceRecord {
   sessionId String            @db.Uuid
   studentId String            @db.Uuid
   session   AttendanceSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
-  student   Student           @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  student   StudentProfile    @relation(fields: [studentId], references: [id], onDelete: Cascade)
 
   @@unique([sessionId, studentId])
   @@index([studentId])

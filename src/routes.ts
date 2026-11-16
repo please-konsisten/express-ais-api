@@ -16,8 +16,8 @@ import {
 } from "@src/modules/user/user.schema";
 import { PERMISSIONS as P } from "@src/shared/constants/permissions";
 import { authenticate, requirePermission } from "@src/shared/middleware/auth.middleware";
-import { idParamSchema } from "@src/shared/validation/common-validation";
-import { validate } from "@src/shared/validation/validation";
+import { idParamSchema } from "@src/shared/schemas/common.schema";
+import { validate } from "@src/shared/middleware/validate.middleware";
 
 // Semua route API. Dipasang di web.ts pada /api, SETELAH dokumentasi (/api/docs),
 // karena router.use(authenticate) di bawah berlaku untuk semua path setelahnya.

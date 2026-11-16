@@ -1,4 +1,4 @@
-/ Jalankan: npx prisma db seed   (idempotent, aman dijalankan berulang)
+// Jalankan: npx prisma db seed   (idempotent, aman dijalankan berulang)
 //
 // Akun admin dibuat dari environment (tidak ada password bawaan):
 //   SEED_ADMIN_EMAIL, SEED_ADMIN_PASSWORD, dan opsional SEED_ADMIN_USERNAME (default "admin")

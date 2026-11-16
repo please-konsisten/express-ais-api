@@ -1,4 +1,4 @@
-/web.ts
+//web.ts
 
 import express, { type Express, type Response } from 'express';
 import cookieParser from "cookie-parser";

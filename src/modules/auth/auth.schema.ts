@@ -7,13 +7,6 @@ export type LoginInput = {
   password: string;
 };
 
-export type RefreshTokenInput = {
-  refreshToken: string;
-};
-
-export type LogoutInput = {
-  refreshToken: string;
-};
 
 export type ChangePasswordInput = {
   oldPassword: string;
@@ -28,13 +21,6 @@ export type ChangePasswordInput = {
 export const loginSchema = Joi.object<LoginInput>({
   identifier: Joi.string().trim().lowercase().min(3).max(255).required(),
   password: existingPassword.required(),
-});
-
-// Refresh token acak 48 byte base64url = 64 karakter.
-const refreshToken = Joi.string().trim().max(128).required();
-
-export const refreshTokenSchema = Joi.object<RefreshTokenInput>({
-  refreshToken,
 });
 
 export const changePasswordSchema = Joi.object<ChangePasswordInput>({

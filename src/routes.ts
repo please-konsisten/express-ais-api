@@ -1,6 +1,6 @@
 import express from "express";
 import * as authController from "@src/modules/auth/auth.controller";
-import { changePasswordSchema, loginSchema, refreshTokenSchema } from "@src/modules/auth/auth.schema";
+import { changePasswordSchema, loginSchema} from "@src/modules/auth/auth.schema";
 import * as userController from "@src/modules/user/user.controller";
 import {
   createUserSchema,
@@ -30,7 +30,7 @@ export const routes = express.Router();
 // Pendaftaran akun tidak publik: akun dibuat admin lewat POST /api/users.
 // ======================================================================
 routes.post("/auth/login", validate(loginSchema), authController.login);
-routes.post("/auth/refresh-token", validate(refreshTokenSchema), authController.refresh);
+routes.post("/auth/refresh-token", authController.refresh);
 routes.post("/auth/logout", authController.logout);
 
 // ======================================================================

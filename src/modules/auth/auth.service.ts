@@ -4,7 +4,7 @@ import { prismaClient } from "@src/shared/lib/database";
 import { signAccessToken } from "@src/shared/lib/jwt";
 import { hashPassword, verifyPassword } from "@src/shared/lib/password";
 import { ResponseError } from "@src/shared/errors/response-error";
-import type { ChangePasswordInput, LoginInput, LogoutInput, RefreshTokenInput } from "./auth.schema";
+import type { ChangePasswordInput, LoginInput } from "./auth.schema";
 
 export const REFRESH_TOKEN_TTL_MS = 7 * 24 * 60 * 60 * 1000; // 7 hari
 
@@ -76,7 +76,7 @@ export const login = async (input: LoginInput) => {
 };
 
 // Refresh token dirotasi: token lama dihapus, token baru diterbitkan.
-export const refresh = async (input: RefreshTokenInput) => {
+export const refresh = async (input: any | undefined) => {
   const stored = await prismaClient.refreshToken.findUnique({
     where: { tokenHash: sha256(input.refreshToken) },
     include: { account: { select: userSelect } },
@@ -90,13 +90,26 @@ export const refresh = async (input: RefreshTokenInput) => {
   }
 
   return prismaClient.$transaction(async (tx) => {
-    // deleteMany + cek count: kalau dua request memakai token yang sama bersamaan,
-    // hanya satu yang berhasil menghapus, yang lain ditolak.
-    const { count } = await tx.refreshToken.deleteMany({ where: { id: stored.id } });
+    const { count } = await tx.refreshToken.updateMany({
+      where: {
+        id: stored.id,
+        revokedAt: null,
+      },
+      data: {
+        revokedAt: new Date(),
+      },
+    });
+
     if (count !== 1) {
-      throw new ResponseError(401, "Refresh token tidak valid atau sudah kedaluwarsa");
+      throw new ResponseError(401, "Refresh token tidak valid atau sudah digunakan");
     }
-    return issueTokens(stored.account, tx);
+
+    const tokens = await issueTokens(stored.account, tx);
+
+    return {
+      ...tokens,
+      user: stored.account,
+    };
   });
 };
 

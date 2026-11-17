@@ -1,7 +1,7 @@
 import type { Request, Response } from "express";
 import { getAuthUser } from "@src/shared/middleware/auth.middleware";
 import * as authService from "./auth.service";
-import type { ChangePasswordInput, LoginInput, LogoutInput, RefreshTokenInput } from "./auth.schema";
+import type { ChangePasswordInput, LoginInput } from "./auth.schema";
 
 const cookieSecure = process.env.COOKIE_SECURE
   ? process.env.COOKIE_SECURE === "true"
@@ -24,8 +24,30 @@ export const login = async (req: Request, res: Response) => {
 };
 
 export const refresh = async (req: Request, res: Response) => {
-  const data = await authService.refresh(req.body as RefreshTokenInput);
-  res.status(200).json({ data });
+  const refreshToken = req.cookies?.refreshToken
+
+  if (!refreshToken) {
+    return res.status(401).json({
+      message: 'Refresh token tidak ditemukan',
+    })
+  }
+
+  const result = await authService.refresh({ refreshToken })
+
+  res.cookie('refreshToken', result.refreshToken, {
+    httpOnly: true,
+    secure: cookieSecure,
+    sameSite: 'lax',
+    maxAge: authService.REFRESH_TOKEN_TTL_MS,
+    path: '/api/auth',
+  })
+
+  res.status(200).json({
+    data: {
+      accessToken: result.accessToken,
+      user: result.user,
+    },
+  });
 };
 
 export const logout = async (req: Request, res: Response) => {
@@ -42,7 +64,6 @@ export const logout = async (req: Request, res: Response) => {
   res.status(200).json({ message: "Logout berhasil" });
 };
 
-// Butuh middleware authenticate yang mengisi req.user
 export const changePassword = async (req: Request, res: Response) => {
   await authService.changePassword(getAuthUser(req).id, req.body as ChangePasswordInput);
   res.status(200).json({ message: "Password berhasil diubah. Silakan login kembali." });

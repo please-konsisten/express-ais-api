@@ -1,6 +1,6 @@
 import express from "express";
 import * as authController from "@src/modules/auth/auth.controller";
-import { changePasswordSchema, loginSchema, logoutSchema, refreshTokenSchema } from "@src/modules/auth/auth.schema";
+import { changePasswordSchema, loginSchema, refreshTokenSchema } from "@src/modules/auth/auth.schema";
 import * as userController from "@src/modules/user/user.controller";
 import {
   createUserSchema,
@@ -31,7 +31,7 @@ export const routes = express.Router();
 // ======================================================================
 routes.post("/auth/login", validate(loginSchema), authController.login);
 routes.post("/auth/refresh-token", validate(refreshTokenSchema), authController.refresh);
-routes.post("/auth/logout", validate(logoutSchema), authController.logout);
+routes.post("/auth/logout", authController.logout);
 
 // ======================================================================
 // Wajib login

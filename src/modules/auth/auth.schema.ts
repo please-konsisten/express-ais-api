@@ -37,10 +37,6 @@ export const refreshTokenSchema = Joi.object<RefreshTokenInput>({
   refreshToken,
 });
 
-export const logoutSchema = Joi.object<LogoutInput>({
-  refreshToken,
-});
-
 export const changePasswordSchema = Joi.object<ChangePasswordInput>({
   oldPassword: existingPassword.required(),
   newPassword: strongPassword

@@ -6,7 +6,7 @@ import { hashPassword, verifyPassword } from "@src/shared/lib/password";
 import { ResponseError } from "@src/shared/errors/response-error";
 import type { ChangePasswordInput, LoginInput, LogoutInput, RefreshTokenInput } from "./auth.schema";
 
-const REFRESH_TOKEN_TTL_MS = 7 * 24 * 60 * 60 * 1000; // 7 hari
+export const REFRESH_TOKEN_TTL_MS = 7 * 24 * 60 * 60 * 1000; // 7 hari
 
 const sha256 = (value: string) => createHash("sha256").update(value).digest("hex");
 
@@ -101,9 +101,12 @@ export const refresh = async (input: RefreshTokenInput) => {
 };
 
 // Idempotent: token yang sudah tidak ada tidak dianggap error.
-export const logout = async (input: LogoutInput) => {
-  await prismaClient.refreshToken.deleteMany({
-    where: { tokenHash: sha256(input.refreshToken) },
+export const logout = async (rawToken: string | undefined) => {
+  if (!rawToken) return;
+
+  await prismaClient.refreshToken.updateMany({
+    where: { tokenHash: sha256(rawToken), revokedAt: null },
+    data: { revokedAt: new Date() },
   });
 };
 

@@ -1,9 +1,9 @@
 // Akun user beserta profil student & teacher (profil dibuat bersamaan dengan akun,
 // jadi dikelompokkan dalam satu file).
 import Joi from "joi";
-import { paginationKeys, requiredUuid, uuid } from "@src/shared/validation/common-validation";
-import type { PaginationQuery } from "@src/shared/validation/common-validation";
-import { email, strongPassword as password, username } from "@src/shared/validation/account-validation";
+import { paginationKeys, requiredUuid, uuid } from "@src/shared/schemas/common.schema";
+import type { PaginationQuery } from "@src/shared/schemas/common.schema";
+import { email, strongPassword as password, username } from "@src/shared/schemas/account.schema";
 
 // ---------- field bersama (Akun & Identitas Resmi - Admin) ----------
 const fullName = Joi.string().trim().min(2).max(255);

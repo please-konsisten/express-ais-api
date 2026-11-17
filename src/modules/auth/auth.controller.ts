@@ -1,13 +1,25 @@
 import type { Request, Response } from "express";
-import { getAuthUser } from "@src/shared/middleware/auth-middleware";
+import { getAuthUser } from "@src/shared/middleware/auth.middleware";
 import * as authService from "./auth.service";
 import type { ChangePasswordInput, LoginInput, LogoutInput, RefreshTokenInput } from "./auth.schema";
 
-// Express 5 meneruskan error dari handler async ke error handler secara otomatis,
-// jadi tidak perlu try/catch. Body sudah divalidasi oleh middleware validate di route.
+const cookieSecure = process.env.COOKIE_SECURE
+  ? process.env.COOKIE_SECURE === "true"
+  : true;
 
 export const login = async (req: Request, res: Response) => {
-  const data = await authService.login(req.body as LoginInput);
+  const result = await authService.login(req.body as LoginInput);
+
+  const { refreshToken, ...data } = result;
+
+  res.cookie("refreshToken", refreshToken, {
+    httpOnly: true,
+    secure: cookieSecure,
+    sameSite: "lax",
+    maxAge: authService.REFRESH_TOKEN_TTL_MS,
+    path: "/api/auth",
+  });
+
   res.status(200).json({ data });
 };
 
@@ -17,7 +29,16 @@ export const refresh = async (req: Request, res: Response) => {
 };
 
 export const logout = async (req: Request, res: Response) => {
-  await authService.logout(req.body as LogoutInput);
+  try {
+    await authService.logout(req.cookies?.refreshToken);
+  } finally {
+    res.clearCookie("refreshToken", {
+      httpOnly: true,
+      secure: cookieSecure,
+      sameSite: "lax",
+      path: "/api/auth",
+    });
+  }
   res.status(200).json({ message: "Logout berhasil" });
 };
 

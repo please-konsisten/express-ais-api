@@ -1,6 +1,6 @@
 import type { Request, Response } from "express";
-import type { IdParam } from "@src/shared/validation/common-validation";
-import { getAuthUser } from "@src/shared/middleware/auth-middleware";
+import type { IdParam } from "@src/shared/schemas/common.schema";
+import { getAuthUser } from "@src/shared/middleware/auth.middleware";
 import * as userService from "./user.service";
 import type {
   CreateUserInput,

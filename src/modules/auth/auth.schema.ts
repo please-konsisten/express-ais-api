@@ -1,6 +1,6 @@
 // src/modules/auth/auth.schema.ts
 import Joi from "joi";
-import { existingPassword, strongPassword } from "@src/shared/validation/account-validation";
+import { existingPassword, strongPassword } from "@src/shared/schemas/account.schema";
 
 export type LoginInput = {
   identifier: string;
@@ -34,10 +34,6 @@ export const loginSchema = Joi.object<LoginInput>({
 const refreshToken = Joi.string().trim().max(128).required();
 
 export const refreshTokenSchema = Joi.object<RefreshTokenInput>({
-  refreshToken,
-});
-
-export const logoutSchema = Joi.object<LogoutInput>({
   refreshToken,
 });
 

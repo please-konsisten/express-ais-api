@@ -7,17 +7,12 @@ export type LoginInput = {
   password: string;
 };
 
-
 export type ChangePasswordInput = {
   oldPassword: string;
   newPassword: string;
   confirmPassword: string;
 };
 
-// identifier = email atau username. Formatnya sengaja tidak dicek ketat (username boleh
-// mengandung titik, underscore, dan strip): kecocokan sebenarnya ditentukan di database.
-// Password login juga tidak dicek komposisinya, supaya akun lama tetap bisa masuk dan
-// mendapat 401 (bukan 400) saat password salah.
 export const loginSchema = Joi.object<LoginInput>({
   identifier: Joi.string().trim().lowercase().min(3).max(255).required(),
   password: existingPassword.required(),

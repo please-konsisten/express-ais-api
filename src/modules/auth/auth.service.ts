@@ -6,15 +6,13 @@ import { hashPassword, verifyPassword } from "@src/shared/lib/password";
 import { ResponseError } from "@src/shared/errors/response-error";
 import type { ChangePasswordInput, LoginInput } from "./auth.schema";
 
-export const REFRESH_TOKEN_TTL_MS = 7 * 24 * 60 * 60 * 1000; // 7 hari
+export const REFRESH_TOKEN_TTL_MS = 7 * 24 * 60 * 60 * 1000;
 
 const sha256 = (value: string) => createHash("sha256").update(value).digest("hex");
 
 type TokenOwner = { id: string; roleId: string };
 type Db = Prisma.TransactionClient | typeof prismaClient;
 
-// Refresh token acak disimpan dalam bentuk hash, jadi kebocoran database
-// tidak langsung memberi token yang bisa dipakai.
 const issueTokens = async (user: TokenOwner, db: Db = prismaClient) => {
   const refreshToken = randomBytes(48).toString("base64url");
 
@@ -41,8 +39,8 @@ const userSelect = {
   role: { select: { name: true, isSuperAdmin: true } },
 } satisfies Prisma.AccountSelect;
 
+/*---- Login Service ----*/
 export const login = async (input: LoginInput) => {
-  // email dan username disimpan lowercase saat register
   const identifier = input.identifier.toLowerCase();
 
   const user = await prismaClient.account.findFirst({
@@ -50,13 +48,12 @@ export const login = async (input: LoginInput) => {
     select: { ...userSelect, hashPassword: true },
   });
 
-  // bcrypt.compare tetap dijalankan walau user tidak ada, supaya waktu respons tidak membocorkan
-  // apakah identifier terdaftar.
   const passwordMatches = await verifyPassword(input.password, user?.hashPassword);
+
   if (!user || !passwordMatches) {
     throw new ResponseError(401, "Identifier atau password salah");
   }
-  // Dicek setelah password benar, supaya status akun tidak bisa ditebak tanpa password.
+
   if (!user.isActive) {
     throw new ResponseError(403, "Akun tidak aktif");
   }
@@ -75,7 +72,7 @@ export const login = async (input: LoginInput) => {
   };
 };
 
-// Refresh token dirotasi: token lama dihapus, token baru diterbitkan.
+/*---- Refresh Token Service ----*/
 export const refresh = async (input: any | undefined) => {
   const stored = await prismaClient.refreshToken.findUnique({
     where: { tokenHash: sha256(input.refreshToken) },
@@ -91,10 +88,7 @@ export const refresh = async (input: any | undefined) => {
 
   return prismaClient.$transaction(async (tx) => {
     const { count } = await tx.refreshToken.updateMany({
-      where: {
-        id: stored.id,
-        revokedAt: null,
-      },
+      where: {id: stored.id, revokedAt: null},
       data: {
         revokedAt: new Date(),
       },
@@ -113,7 +107,7 @@ export const refresh = async (input: any | undefined) => {
   });
 };
 
-// Idempotent: token yang sudah tidak ada tidak dianggap error.
+/*---- Logout Service ----*/
 export const logout = async (rawToken: string | undefined) => {
   if (!rawToken) return;
 
@@ -123,7 +117,7 @@ export const logout = async (rawToken: string | undefined) => {
   });
 };
 
-// Setelah password berubah, semua sesi (refresh token) user dicabut, termasuk di perangkat lain.
+/*---- Change Password Service ----*/
 export const changePassword = async (userId: string, input: ChangePasswordInput) => {
   const user = await prismaClient.account.findUnique({
     where: { id: userId },
@@ -135,7 +129,6 @@ export const changePassword = async (userId: string, input: ChangePasswordInput)
 
   const oldPasswordMatches = await verifyPassword(input.oldPassword, user.hashPassword);
   if (!oldPasswordMatches) {
-    // 400, bukan 401, supaya klien tidak mengira sesinya habis lalu logout otomatis
     throw new ResponseError(400, "Password lama salah");
   }
 

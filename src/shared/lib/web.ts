@@ -29,7 +29,9 @@ export const web = async () => {
   const app = express();
 
   app.use(express.json());
+  /*---- Active Cookie ----*/
   app.use(cookieParser())
+  /*---- White list Domain dan Header ----*/
   app.use(cors({ origin: 'http://localhost:5173', credentials: true }))
   await cleanupExpiredTokens()
   task.start()

@@ -8,6 +8,7 @@ if (!secret) {
 export type AccessTokenPayload = {
   sub: string; // user id
   roleId: string;
+  roleName: string;
 };
 
 const ALGORITHM = "HS256";
@@ -24,5 +25,5 @@ export const verifyAccessToken = (token: string): AccessTokenPayload => {
     throw new jwt.JsonWebTokenError("Payload token tidak valid");
   }
 
-  return { sub: decoded.sub, roleId: decoded["roleId"] };
+  return { sub: decoded.sub, roleId: decoded["roleId"], roleName: decoded["roleName"] };
 };

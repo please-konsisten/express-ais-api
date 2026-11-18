@@ -10,7 +10,13 @@ export const REFRESH_TOKEN_TTL_MS = 7 * 24 * 60 * 60 * 1000;
 
 const sha256 = (value: string) => createHash("sha256").update(value).digest("hex");
 
-type TokenOwner = { id: string; roleId: string };
+type TokenOwner = { 
+  id: string; 
+  roleId: string; 
+  role: {
+    name: string 
+  };
+}
 type Db = Prisma.TransactionClient | typeof prismaClient;
 
 const issueTokens = async (user: TokenOwner, db: Db = prismaClient) => {
@@ -25,7 +31,7 @@ const issueTokens = async (user: TokenOwner, db: Db = prismaClient) => {
   });
 
   return {
-    accessToken: signAccessToken({ sub: user.id, roleId: user.roleId }),
+    accessToken: signAccessToken({ sub: user.id, roleId: user.roleId, roleName: user.role.name }),
     refreshToken,
   };
 };

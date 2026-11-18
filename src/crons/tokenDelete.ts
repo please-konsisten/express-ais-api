@@ -1,11 +1,10 @@
-import cron from "node-cron"
+import cron from "node-cron";
 
-import { prismaClient } from "@src/shared/lib/database"
-import { logger } from "@src/shared/lib/logging"
+import { prismaClient } from "@src/shared/lib/database";
+import { logger } from "@src/shared/lib/logging";
 
-// Refresh token yang sudah kedaluwarsa atau dicabut tidak bisa dipakai lagi (dicek di auth.service),
-// jadi pembersihan cukup sesekali: setiap jam pada menit ke-0.
-export const task = cron.schedule('0 * * * *', async () => {
+// Fungsi utama pembersihan token yang bisa dipanggil kapan saja
+export const cleanupExpiredTokens = async () => {
   try {
     const deleted = await prismaClient.refreshToken.deleteMany({
       where: {
@@ -16,10 +15,15 @@ export const task = cron.schedule('0 * * * *', async () => {
       },
     });
 
-    if (deleted.count > 0) {
-      logger.info(`Pembersihan refresh token: ${deleted.count} token dihapus`);
-    }
+    logger.info(
+      `Pembersihan refresh token selesai: ${deleted.count} token dihapus`
+    );
   } catch (error) {
-    logger.error('Gagal membersihkan refresh token', { error });
+    logger.error("Gagal membersihkan refresh token", { error });
   }
+};
+
+export const task = cron.schedule("*/10 * * * *", cleanupExpiredTokens, {
+  timezone: "Asia/Jakarta",
 });
+

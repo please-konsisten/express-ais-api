@@ -8,7 +8,7 @@ import path from 'path';
 import { routes } from '@src/routes';
 import { errorMiddleware } from '@src/shared/middleware/error.middleware';
 import cors from "cors"
-import { task } from "@src/crons/tokenDelete";
+import { cleanupExpiredTokens, task } from "@src/crons/tokenDelete";
 import { logger } from "@src/shared/lib/logging";
 
 // Kegagalan memuat dokumentasi tidak boleh mematikan API.
@@ -29,16 +29,17 @@ export const web = async () => {
   const app = express();
 
   app.use(express.json());
+  /*---- Active Cookie ----*/
   app.use(cookieParser())
+  /*---- White list Domain dan Header ----*/
   app.use(cors({ origin: 'http://localhost:5173', credentials: true }))
+  await cleanupExpiredTokens()
   task.start()
 
   app.get('/', (_, res: Response) => {
     res.json({ message: "Welcome to Express AIS API" });
   });
 
-  // Urutan penting: docs harus sebelum routes (routes mewajibkan login untuk path setelah
-  // endpoint publiknya), dan errorMiddleware harus paling akhir.
   await mountDocs(app);
   app.use('/api', routes)
 

@@ -1,7 +1,8 @@
 import express from "express";
 import * as authController from "@src/modules/auth/auth.controller";
-import { changePasswordSchema, loginSchema, logoutSchema, refreshTokenSchema } from "@src/modules/auth/auth.schema";
+import { changePasswordSchema, loginSchema} from "@src/modules/auth/auth.schema";
 import * as userController from "@src/modules/user/user.controller";
+import * as academicController from "@src/modules/academic/academic.controller"
 import {
   createUserSchema,
   listStudentQuerySchema,
@@ -25,17 +26,12 @@ import { validate } from "@src/shared/middleware/validate.middleware";
 // pengecekan akun super admin ada di user.service (lapis kedua).
 export const routes = express.Router();
 
-// ======================================================================
-// Publik (tanpa access token)
-// Pendaftaran akun tidak publik: akun dibuat admin lewat POST /api/users.
-// ======================================================================
+/*---- Public Routes -----*/
 routes.post("/auth/login", validate(loginSchema), authController.login);
-routes.post("/auth/refresh-token", validate(refreshTokenSchema), authController.refresh);
-routes.post("/auth/logout", validate(logoutSchema), authController.logout);
+routes.post("/auth/refresh-token", authController.refresh);
+routes.post("/auth/logout", authController.logout);
 
-// ======================================================================
-// Wajib login
-// ======================================================================
+/*---- Private Routes: Must Login -----*/
 routes.use(authenticate);
 
 // ---------- auth ----------
@@ -52,6 +48,7 @@ routes.get("/users/:id", requirePermission(P.USER_READ), validate(idParamSchema,
 routes.post("/users", requirePermission(P.USER_CREATE), validate(createUserSchema), userController.createUser);
 routes.patch("/users/:id", requirePermission(P.USER_UPDATE), validate(idParamSchema, "params"), validate(updateUserSchema), userController.updateUser);
 routes.patch("/users/:id/password", requirePermission(P.USER_RESET_PASSWORD), validate(idParamSchema, "params"), validate(resetUserPasswordSchema), userController.resetUserPassword);
+routes.post("/academic-terms", requirePermission(P.USER_CREATE), academicController.createAcademicTerm)
 
 // ---------- mahasiswa (admin) ----------
 routes.get("/students", requirePermission(P.STUDENT_READ), validate(listStudentQuerySchema, "query"), userController.listStudents);
